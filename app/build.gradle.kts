@@ -23,16 +23,25 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystoreFile = project.findProperty("KEYSTORE_FILE") as? String
+            val keystoreFile = (project.findProperty("KEYSTORE_FILE") as? String)
                 ?: System.getenv("KEYSTORE_FILE")
-            if (keystoreFile != null && file(keystoreFile).exists()) {
-                storeFile = file(keystoreFile)
-                storePassword = project.findProperty("KEYSTORE_PASSWORD") as? String
-                    ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
-                keyAlias = project.findProperty("KEY_ALIAS") as? String
-                    ?: System.getenv("KEY_ALIAS") ?: ""
-                keyPassword = project.findProperty("KEY_PASSWORD") as? String
-                    ?: System.getenv("KEY_PASSWORD") ?: ""
+
+            if (!keystoreFile.isNullOrBlank()) {
+                val candidateFile = when {
+                    file(keystoreFile).exists() -> file(keystoreFile)
+                    file("${rootDir}/$keystoreFile").exists() -> file("${rootDir}/$keystoreFile")
+                    file("${projectDir}/$keystoreFile").exists() -> file("${projectDir}/$keystoreFile")
+                    else -> null
+                }
+                if (candidateFile != null) {
+                    storeFile = candidateFile
+                    storePassword = project.findProperty("KEYSTORE_PASSWORD") as? String
+                        ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
+                    keyAlias = project.findProperty("KEY_ALIAS") as? String
+                        ?: System.getenv("KEY_ALIAS") ?: ""
+                    keyPassword = project.findProperty("KEY_PASSWORD") as? String
+                        ?: System.getenv("KEY_PASSWORD") ?: ""
+                }
             }
         }
     }
@@ -47,8 +56,6 @@ android {
             val releaseSigning = signingConfigs.getByName("release")
             if (releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
                 signingConfig = releaseSigning
-            } else {
-                signingConfig = signingConfigs.getByName("debug")
             }
         }
         debug {
@@ -95,4 +102,33 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+gradle.taskGraph.whenReady {
+    val isReleaseBuildRequested = allTasks.any { task ->
+        task.name.contains("Release", ignoreCase = true) &&
+        (task.name.startsWith("assemble") || task.name.startsWith("bundle") || task.name.startsWith("package"))
+    }
+    if (isReleaseBuildRequested) {
+        val releaseConfig = android.signingConfigs.getByName("release")
+        if (releaseConfig.storeFile == null || !releaseConfig.storeFile!!.exists()) {
+            throw GradleException(
+                """
+                |========================================================================================
+                |[LIVLINK BUILD ERROR] فشل بناء نسخة Release: ملف مفتاح التوقيع (Keystore) غير متوفر!
+                |----------------------------------------------------------------------------------------
+                |لإصدار نسخة Release صالحة وموقعة رسمياً، يجب توفير الأسرار والمتغيرات التالية:
+                |  - KEYSTORE_BASE64: كود Base64 لملف الـ Keystore (أو تعيين مسار KEYSTORE_FILE).
+                |  - KEYSTORE_PASSWORD: كلمة مرور ملف المفاتيح.
+                |  - KEY_ALIAS: الاسم التعريفي للمفتاح داخل الـ Keystore.
+                |  - KEY_PASSWORD: كلمة مرور المفتاح الخاص.
+                |
+                |تم إيقاف بناء Release عمداً لمنع إنتاج APK غير موقّع أو موقّع بمفتاح Debug تجريبي.
+                |ملاحظة: يمكنك بناء نسخة Debug بشكل مستقل ودون الحاجة لمفتاح التوقيع عبر:
+                |  ./gradlew assembleDebug
+                |========================================================================================
+                """.trimMargin()
+            )
+        }
+    }
 }
