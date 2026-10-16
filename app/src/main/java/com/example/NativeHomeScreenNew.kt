@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,13 +71,23 @@ fun NativeHomeScreenNew(
     val activeColor = if (isDriver) DriverOrangePrimary else ShopBluePrimary
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        // Bottom nav tabs: 0: الرئيسية, 1: العروض, 2: إضافة, 3: الليفرورات, 4: حسابي
+        // Bottom nav tabs strictly in order:
+        // 0: الرئيسية, 1: العروض, 2: إضافة (center), 3: الليفرورات, 4: حسابي
         var currentTab by remember { mutableIntStateOf(0) }
         var selectedCity by remember { mutableStateOf("جميع مدن المغرب") }
         var cityDropdownExpanded by remember { mutableStateOf(false) }
         var isDriverAvailable by remember { mutableStateOf(true) }
 
-        // Data lists
+        // Selected offer for details dialog
+        var selectedOfferForDetails by remember { mutableStateOf<DeliveryOffer?>(null) }
+        var selectedDriverForDetails by remember { mutableStateOf<DriverProfile?>(null) }
+
+        // Edit Profile Dialog state
+        var showEditProfileDialog by remember { mutableStateOf(false) }
+        var profileName by remember { mutableStateOf(if (isDriver) "سائق توصيل معتمد" else "محل تجاري - ليفلينك") }
+        var profilePhone by remember { mutableStateOf("0661234567") }
+
+        // Offers list
         val offersList = remember {
             mutableStateListOf(
                 DeliveryOffer(
@@ -92,25 +103,25 @@ fun NativeHomeScreenNew(
                 ),
                 DeliveryOffer(
                     id = "2",
-                    title = "ليفرور بموتور خاص (توصيل سريع)",
+                    title = "ليفرور بموتور خاص (توصيل سريع مع صندوق)",
                     city = "الرباط",
                     district = "أكدال / حسان / السويسي",
                     roleType = "عرض توصيل",
                     phone = "0670334455",
                     timeAgo = "منذ 25 دقيقة",
-                    details = "سائق دراجة نارية بصندوق توصيل متاح لتغطية طلبات المطاعم والمحلات بمدينة الرباط وسلا.",
+                    details = "سائق دراجة نارية بصندوق توصيل متاح لتغطية طلبات المطاعم والمحلات بمدينة الرباط وسلا ونواحيها.",
                     vehicleType = "دراجة نارية مع صندوق",
                     priceEstimate = "يومي أو بالطلبية"
                 ),
                 DeliveryOffer(
                     id = "3",
-                    title = "مطعم ومأكولات سريعة",
+                    title = "مطعم وسناك مأكولات سريعة",
                     city = "فاس",
                     district = "فاس الجديد / النرجس",
                     roleType = "طلب توصيل",
                     phone = "0652889900",
                     timeAgo = "منذ 45 دقيقة",
-                    details = "نبحث عن ليفرورات لتوصيل وجبات الغداء والعشاء للمنازل والمكاتب.",
+                    details = "نبحث عن سائقين لخدمة توصيل وجبات الغداء والعشاء للمنازل والشركات بانتظام.",
                     priceEstimate = "20 درهم / توصيلة"
                 ),
                 DeliveryOffer(
@@ -157,23 +168,31 @@ fun NativeHomeScreenNew(
                 DriverProfile("d3", "حمزة التازي", "فاس", "دراجة نارية", "0653344556", true, "4 سنوات", 510),
                 DriverProfile("d4", "أنس البورقادي", "طنجة", "سيارة خفيفة", "0664455667", false, "5 سنوات", 630),
                 DriverProfile("d5", "رشيد المرابط", "مراكش", "دراجة نارية مع صندوق", "0675566778", true, "سنة واحدة", 150),
-                DriverProfile("d6", "طارق بنعلي", "أكادير", "دراجة نارية", "0656677889", true, "سنتان", 310)
+                DriverProfile("d6", "طارق بنعلي", "أكادير", "دراجة نارية مع صندوق", "0656677889", true, "سنتان", 310)
             )
         }
 
-        // Helper call functions
+        // Helper call functions with full error handling
         fun dialPhone(phoneNumber: String) {
             val clean = phoneNumber.replace(" ", "").replace("-", "")
+            if (clean.isBlank()) {
+                Toast.makeText(context, "رقم الهاتف غير متوفر", Toast.LENGTH_SHORT).show()
+                return
+            }
             val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$clean"))
             try {
                 context.startActivity(intent)
             } catch (e: Exception) {
-                Toast.makeText(context, "رقم الهاتف: $clean", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "رقم الاتصال: $clean", Toast.LENGTH_LONG).show()
             }
         }
 
         fun openWhatsApp(phoneNumber: String) {
             val clean = phoneNumber.replace(" ", "").replace("-", "")
+            if (clean.isBlank()) {
+                Toast.makeText(context, "رقم الهاتف غير متوفر", Toast.LENGTH_SHORT).show()
+                return
+            }
             val intPhone = if (clean.startsWith("0")) clean.substring(1) else clean
             val uri = Uri.parse("https://wa.me/212$intPhone")
             val intent = Intent(Intent.ACTION_VIEW, uri)
@@ -186,241 +205,254 @@ fun NativeHomeScreenNew(
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             topBar = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(NavyPrimary)
-                        .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                Surface(
+                    color = NavyPrimary,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Header row: Brand, Slogan, and Reorganized Top Bar Icons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.statusBars)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
-                        // Brand Logo and Title
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(RoundedCornerShape(9.dp))
-                                    .background(activeColor),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "LV",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 17.sp,
-                                    color = Color.White
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "LIVLINK",
-                                    fontSize = 19.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "منصة ربط المحلات بالليفرورات",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFFCBD5E1),
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        // Reorganized Top Bar Icons: Store Icon, Delivery Motorcycle Icon, and Dark Mode Toggle
+                        // Header row: Brand, Slogan, and Reorganized Top Bar Icons
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // 1. Store Icon (Shop Owner mode toggle)
-                            IconButton(
-                                onClick = { onRoleChange("صاحب محل") },
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(if (!isDriver) ShopBluePrimary else NavySecondary)
-                                    .border(
-                                        width = if (!isDriver) 1.5.dp else 0.dp,
-                                        color = if (!isDriver) Color.White.copy(alpha = 0.8f) else Color.Transparent,
-                                        shape = CircleShape
-                                    )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Store,
-                                    contentDescription = "وضع صاحب المحل",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(19.dp)
-                                )
-                            }
-
-                            // 2. Delivery Motorcycle Icon (Delivery Driver mode toggle)
-                            IconButton(
-                                onClick = { onRoleChange("ليفرور") },
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isDriver) DriverOrangePrimary else NavySecondary)
-                                    .border(
-                                        width = if (isDriver) 1.5.dp else 0.dp,
-                                        color = if (isDriver) Color.White.copy(alpha = 0.8f) else Color.Transparent,
-                                        shape = CircleShape
-                                    )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.DeliveryDining,
-                                    contentDescription = "وضع الليفرور",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(21.dp)
-                                )
-                            }
-
-                            // 3. Dark/Light Mode Icon
-                            IconButton(
-                                onClick = onToggleDarkMode,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(NavySecondary)
-                            ) {
-                                Icon(
-                                    imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                    contentDescription = "تغيير الوضع الليلي / النهاري",
-                                    tint = if (isDarkMode) Color(0xFFFBBF24) else Color(0xFFE2E8F0),
-                                    modifier = Modifier.size(19.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Corrected Official Banner (No "مجاني 100%" repeated tag, exact phrase)
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = NavySecondary
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Verified,
-                                contentDescription = null,
-                                tint = activeColor,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "منصة وطنية مغربية مجانية 100% تغطى جميع مدن المملكة",
-                                fontSize = 11.5.sp,
-                                color = Color(0xFFE2E8F0),
-                                fontWeight = FontWeight.Normal
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Role Indicator & City Selector Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Current Active Role Badge
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(activeColor.copy(alpha = 0.18f))
-                                .border(1.dp, activeColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                                .clickable {
-                                    // Click switches role
-                                    onRoleChange(if (isDriver) "صاحب محل" else "ليفرور")
-                                }
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                            // Brand Logo and Title
                             Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(RoundedCornerShape(9.dp))
+                                        .background(activeColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "LV",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 17.sp,
+                                        color = Color.White
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "LIVLINK",
+                                        fontSize = 19.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "منصة ربط المحلات بالليفرورات",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFFCBD5E1),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+
+                            // Reorganized Top Bar Icons (Uniform 38dp, 48dp touch area, properly spaced)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // 1. Store Icon (Shop Owner mode toggle)
+                                IconButton(
+                                    onClick = {
+                                        onRoleChange("صاحب محل")
+                                        Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل (الأزرق)", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(if (!isDriver) ShopBluePrimary else NavySecondary)
+                                        .border(
+                                            width = if (!isDriver) 1.5.dp else 0.dp,
+                                            color = if (!isDriver) Color.White.copy(alpha = 0.9f) else Color.Transparent,
+                                            shape = CircleShape
+                                        )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Store,
+                                        contentDescription = "وضع صاحب المحل",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+
+                                // 2. Motorcycle with delivery box icon (Driver mode toggle)
+                                IconButton(
+                                    onClick = {
+                                        onRoleChange("ليفرور")
+                                        Toast.makeText(context, "تم التبديل إلى وضع سائق التوصيل (البرتقالي)", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isDriver) DriverOrangePrimary else NavySecondary)
+                                        .border(
+                                            width = if (isDriver) 1.5.dp else 0.dp,
+                                            color = if (isDriver) Color.White.copy(alpha = 0.9f) else Color.Transparent,
+                                            shape = CircleShape
+                                        )
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
+                                        contentDescription = "وضع سائق التوصيل (ليفرور)",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+
+                                // 3. Dark/Light Mode Icon
+                                IconButton(
+                                    onClick = onToggleDarkMode,
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(NavySecondary)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                        contentDescription = "تغيير الوضع الليلي / النهاري",
+                                        tint = if (isDarkMode) Color(0xFFFBBF24) else Color(0xFFE2E8F0),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Corrected Official Banner (Exact phrase, without redundant tag)
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = NavySecondary
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Icon(
-                                    imageVector = if (isDriver) Icons.Default.DeliveryDining else Icons.Default.Store,
+                                    imageVector = Icons.Default.Verified,
                                     contentDescription = null,
                                     tint = activeColor,
                                     modifier = Modifier.size(15.dp)
                                 )
-                                Spacer(modifier = Modifier.width(5.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = if (isDriver) "وضع الليفرور (نشط)" else "وضع صاحب المحل (نشط)",
+                                    text = "منصة وطنية مغربية مجانية 100% تغطى جميع مدن المملكة",
                                     fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = Color(0xFFE2E8F0),
+                                    fontWeight = FontWeight.Normal
                                 )
                             }
                         }
 
-                        // City Selector Dropdown
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(NavySecondary)
-                                .clickable { cityDropdownExpanded = true }
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Role Indicator & City Selector Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            // Current Active Role Badge (Clickable to switch)
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(activeColor.copy(alpha = 0.18f))
+                                    .border(1.dp, activeColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        val newRole = if (isDriver) "صاحب محل" else "ليفرور"
+                                        onRoleChange(newRole)
+                                        Toast.makeText(context, "الوضع النشط: $newRole", Toast.LENGTH_SHORT).show()
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 7.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        imageVector = Icons.Default.LocationOn,
+                                        imageVector = if (isDriver) Icons.Default.DeliveryDining else Icons.Default.Store,
                                         contentDescription = null,
                                         tint = activeColor,
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(15.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Spacer(modifier = Modifier.width(5.dp))
                                     Text(
-                                        text = selectedCity,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        text = if (isDriver) "وضع الليفرور (نشط)" else "وضع صاحب المحل (نشط)",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
                                     )
                                 }
-                                Icon(
-                                    imageVector = Icons.Default.ArrowDropDown,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
                             }
 
-                            DropdownMenu(
-                                expanded = cityDropdownExpanded,
-                                onDismissRequest = { cityDropdownExpanded = false }
+                            // City Selector Dropdown
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(NavySecondary)
+                                    .clickable { cityDropdownExpanded = true }
+                                    .padding(horizontal = 8.dp, vertical = 7.dp)
                             ) {
-                                MOROCCAN_CITIES.forEach { city ->
-                                    DropdownMenuItem(
-                                        text = { Text(city, fontSize = 12.sp) },
-                                        onClick = {
-                                            selectedCity = city
-                                            cityDropdownExpanded = false
-                                        }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.LocationOn,
+                                            contentDescription = null,
+                                            tint = activeColor,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = selectedCity,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
                                     )
+                                }
+
+                                DropdownMenu(
+                                    expanded = cityDropdownExpanded,
+                                    onDismissRequest = { cityDropdownExpanded = false }
+                                ) {
+                                    MOROCCAN_CITIES.forEach { city ->
+                                        DropdownMenuItem(
+                                            text = { Text(city, fontSize = 12.sp) },
+                                            onClick = {
+                                                selectedCity = city
+                                                cityDropdownExpanded = false
+                                                Toast.makeText(context, "المدينة المحددة: $city", Toast.LENGTH_SHORT).show()
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -428,49 +460,54 @@ fun NativeHomeScreenNew(
                 }
             },
             bottomBar = {
-                NavigationBar(
-                    modifier = Modifier.navigationBarsPadding(),
-                    containerColor = NavyPrimary,
-                    tonalElevation = 8.dp
+                Surface(
+                    color = NavyPrimary,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Strictly Reordered: 1. الرئيسية, 2. العروض, 3. إضافة, 4. الليفرورات, 5. حسابي
-                    val navItems = listOf(
-                        Triple("الرئيسية", Icons.Default.Home, 0),
-                        Triple("العروض", Icons.Default.ListAlt, 1),
-                        Triple("إضافة", Icons.Default.AddCircle, 2),
-                        Triple("الليفرورات", Icons.Default.DeliveryDining, 3),
-                        Triple("حسابي", Icons.Default.Person, 4)
-                    )
-
-                    navItems.forEach { (label, icon, index) ->
-                        val isSelected = currentTab == index
-                        NavigationBarItem(
-                            selected = isSelected,
-                            onClick = { currentTab = index },
-                            icon = {
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = label,
-                                    tint = if (isSelected) activeColor else Color(0xFF94A3B8),
-                                    modifier = Modifier.size(if (index == 2) 26.dp else 22.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = label,
-                                    fontSize = 10.5.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) activeColor else Color(0xFF94A3B8)
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = activeColor,
-                                selectedTextColor = activeColor,
-                                unselectedIconColor = Color(0xFF94A3B8),
-                                unselectedTextColor = Color(0xFF94A3B8),
-                                indicatorColor = activeColor.copy(alpha = 0.15f)
-                            )
+                    NavigationBar(
+                        modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
+                        containerColor = NavyPrimary,
+                        tonalElevation = 8.dp
+                    ) {
+                        // Strictly 5 destinations: 1.الرئيسية, 2.العروض, 3.إضافة, 4.الليفرورات, 5.حسابي
+                        val navItems = listOf(
+                            Triple("الرئيسية", Icons.Default.Home, 0),
+                            Triple("العروض", Icons.Default.ListAlt, 1),
+                            Triple("إضافة", Icons.Default.AddCircle, 2),
+                            Triple("الليفرورات", Icons.Default.DeliveryDining, 3),
+                            Triple("حسابي", Icons.Default.Person, 4)
                         )
+
+                        navItems.forEach { (label, icon, index) ->
+                            val isSelected = currentTab == index
+                            NavigationBarItem(
+                                selected = isSelected,
+                                onClick = { currentTab = index },
+                                icon = {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = label,
+                                        tint = if (isSelected) activeColor else Color(0xFF94A3B8),
+                                        modifier = Modifier.size(if (index == 2) 26.dp else 22.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = label,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) activeColor else Color(0xFF94A3B8)
+                                    )
+                                },
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = activeColor,
+                                    selectedTextColor = activeColor,
+                                    unselectedIconColor = Color(0xFF94A3B8),
+                                    unselectedTextColor = Color(0xFF94A3B8),
+                                    indicatorColor = activeColor.copy(alpha = 0.18f)
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -488,13 +525,21 @@ fun NativeHomeScreenNew(
                         activeColor = activeColor,
                         selectedCity = selectedCity,
                         isDriverAvailable = isDriverAvailable,
-                        onToggleDriverAvailability = { isDriverAvailable = !isDriverAvailable },
+                        onToggleDriverAvailability = {
+                            isDriverAvailable = !isDriverAvailable
+                            Toast.makeText(
+                                context,
+                                if (isDriverAvailable) "أنت الآن متاح لتلقي طلبيات التوصيل" else "تم إيقاف جاهزية التوصيل مؤقتاً",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
                         offers = offersList.filter {
                             selectedCity == "جميع مدن المغرب" || it.city == selectedCity
                         },
                         onNavigateToOffers = { currentTab = 1 },
                         onNavigateToAdd = { currentTab = 2 },
                         onNavigateToDrivers = { currentTab = 3 },
+                        onSelectOffer = { selectedOfferForDetails = it },
                         onDial = { dialPhone(it) },
                         onWhatsApp = { openWhatsApp(it) }
                     )
@@ -508,11 +553,12 @@ fun NativeHomeScreenNew(
                             selectedCity == "جميع مدن المغرب" || it.city == selectedCity
                         },
                         onNavigateToAdd = { currentTab = 2 },
+                        onSelectOffer = { selectedOfferForDetails = it },
                         onDial = { dialPhone(it) },
                         onWhatsApp = { openWhatsApp(it) }
                     )
 
-                    // 3. إضافة
+                    // 3. إضافة (center tab)
                     2 -> AddScreen(
                         onDismiss = { currentTab = 0 },
                         initialType = if (isDriver) "عرض توصيل" else "طلب توصيل",
@@ -544,6 +590,7 @@ fun NativeHomeScreenNew(
                         drivers = driversList.filter {
                             selectedCity == "جميع مدن المغرب" || it.city == selectedCity
                         },
+                        onSelectDriver = { selectedDriverForDetails = it },
                         onDial = { dialPhone(it) },
                         onWhatsApp = { openWhatsApp(it) }
                     )
@@ -553,10 +600,182 @@ fun NativeHomeScreenNew(
                         isDriver = isDriver,
                         activeColor = activeColor,
                         selectedCity = selectedCity,
+                        userName = profileName,
+                        userPhone = profilePhone,
                         isDriverAvailable = isDriverAvailable,
-                        onToggleDriverAvailability = { isDriverAvailable = !isDriverAvailable },
+                        onToggleDriverAvailability = {
+                            isDriverAvailable = !isDriverAvailable
+                            Toast.makeText(
+                                context,
+                                if (isDriverAvailable) "أنت متاح للتوصيل" else "حالتك متوقفة",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
                         onSwitchRole = {
-                            onRoleChange(if (isDriver) "صاحب محل" else "ليفرور")
+                            val nextRole = if (isDriver) "صاحب محل" else "ليفرور"
+                            onRoleChange(nextRole)
+                            Toast.makeText(context, "تم التحويل إلى: $nextRole", Toast.LENGTH_SHORT).show()
+                        },
+                        onOpenEditDialog = { showEditProfileDialog = true }
+                    )
+                }
+
+                // Offer Details Dialog
+                selectedOfferForDetails?.let { offer ->
+                    AlertDialog(
+                        onDismissRequest = { selectedOfferForDetails = null },
+                        title = {
+                            Text(
+                                text = offer.title,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = "نوع الإعلان: ${offer.roleType}",
+                                    fontWeight = FontWeight.Bold,
+                                    color = activeColor,
+                                    fontSize = 13.sp
+                                )
+                                Text(text = "المدينة والحي: ${offer.city} • ${offer.district}", fontSize = 12.5.sp)
+                                Text(text = "تفاصيل الطلب: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp)
+                                Text(text = "رقم الهاتف: ${offer.phone}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    openWhatsApp(offer.phone)
+                                    selectedOfferForDetails = null
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
+                            ) {
+                                Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("واتساب")
+                            }
+                        },
+                        dismissButton = {
+                            OutlinedButton(
+                                onClick = {
+                                    dialPhone(offer.phone)
+                                    selectedOfferForDetails = null
+                                }
+                            ) {
+                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("اتصال")
+                            }
+                        }
+                    )
+                }
+
+                // Driver Details Dialog
+                selectedDriverForDetails?.let { driver ->
+                    AlertDialog(
+                        onDismissRequest = { selectedDriverForDetails = null },
+                        title = {
+                            Text(
+                                text = driver.name,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(text = "المدينة: ${driver.city}", fontSize = 13.sp)
+                                Text(text = "وسيلة النقل: ${driver.vehicle}", fontSize = 13.sp)
+                                Text(text = "سنوات الخبرة: ${driver.experience}", fontSize = 13.sp)
+                                Text(text = "التوصيلات المنجزة: ${driver.completedTrips} توصيلة", fontSize = 13.sp, color = activeColor, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = if (driver.isAvailable) "الحالة: متاح للتوصيل الفوري" else "الحالة: مشغول حالياً",
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (driver.isAvailable) Color(0xFF16A34A) else Color.Gray,
+                                    fontSize = 12.5.sp
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    dialPhone(driver.phone)
+                                    selectedDriverForDetails = null
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = activeColor)
+                            ) {
+                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("اتصال مباشر")
+                            }
+                        },
+                        dismissButton = {
+                            OutlinedButton(
+                                onClick = {
+                                    openWhatsApp(driver.phone)
+                                    selectedDriverForDetails = null
+                                }
+                            ) {
+                                Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("واتساب")
+                            }
+                        }
+                    )
+                }
+
+                // Edit Profile Dialog
+                if (showEditProfileDialog) {
+                    var tempName by remember { mutableStateOf(profileName) }
+                    var tempPhone by remember { mutableStateOf(profilePhone) }
+
+                    AlertDialog(
+                        onDismissRequest = { showEditProfileDialog = false },
+                        title = {
+                            Text(
+                                text = "تعديل بيانات الحساب",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                OutlinedTextField(
+                                    value = tempName,
+                                    onValueChange = { tempName = it },
+                                    label = { Text("الاسم المعتمد") },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                OutlinedTextField(
+                                    value = tempPhone,
+                                    onValueChange = { tempPhone = it },
+                                    label = { Text("رقم الهاتف") },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    if (tempName.isNotBlank() && tempPhone.isNotBlank()) {
+                                        profileName = tempName
+                                        profilePhone = tempPhone
+                                        showEditProfileDialog = false
+                                        Toast.makeText(context, "تم حفظ البيانات محلياً بنجاح", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = activeColor)
+                            ) {
+                                Text("حفظ التعديل")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showEditProfileDialog = false }) {
+                                Text("إلغاء")
+                            }
                         }
                     )
                 }
@@ -579,12 +798,13 @@ fun HomeTabContent(
     onNavigateToOffers: () -> Unit,
     onNavigateToAdd: () -> Unit,
     onNavigateToDrivers: () -> Unit,
+    onSelectOffer: (DeliveryOffer) -> Unit,
     onDial: (String) -> Unit,
     onWhatsApp: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Hero Card (Shop Owner vs Driver)
@@ -648,7 +868,9 @@ fun HomeTabContent(
                             containerColor = NavyPrimary
                         ),
                         shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -758,7 +980,7 @@ fun HomeTabContent(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
                                 .background(activeColor.copy(alpha = 0.12f)),
                             contentAlignment = Alignment.Center
@@ -802,7 +1024,7 @@ fun HomeTabContent(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
                                 .background(activeColor.copy(alpha = 0.12f)),
                             contentAlignment = Alignment.Center
@@ -846,7 +1068,7 @@ fun HomeTabContent(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
                                 .background(Color(0xFFF0FDF4)),
                             contentAlignment = Alignment.Center
@@ -929,6 +1151,7 @@ fun HomeTabContent(
                 OfferItemCard(
                     offer = offer,
                     activeColor = activeColor,
+                    onClick = { onSelectOffer(offer) },
                     onDial = { onDial(offer.phone) },
                     onWhatsApp = { onWhatsApp(offer.phone) }
                 )
@@ -947,6 +1170,7 @@ fun OffersTabContent(
     selectedCity: String,
     offers: List<DeliveryOffer>,
     onNavigateToAdd: () -> Unit,
+    onSelectOffer: (DeliveryOffer) -> Unit,
     onDial: (String) -> Unit,
     onWhatsApp: (String) -> Unit
 ) {
@@ -962,7 +1186,7 @@ fun OffersTabContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -989,11 +1213,11 @@ fun OffersTabContent(
                     onClick = onNavigateToAdd,
                     colors = ButtonDefaults.buttonColors(containerColor = activeColor),
                     shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("إضافة", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("إضافة", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -1049,6 +1273,7 @@ fun OffersTabContent(
                 OfferItemCard(
                     offer = offer,
                     activeColor = activeColor,
+                    onClick = { onSelectOffer(offer) },
                     onDial = { onDial(offer.phone) },
                     onWhatsApp = { onWhatsApp(offer.phone) }
                 )
@@ -1066,12 +1291,13 @@ fun DriversTabContent(
     activeColor: Color,
     selectedCity: String,
     drivers: List<DriverProfile>,
+    onSelectDriver: (DriverProfile) -> Unit,
     onDial: (String) -> Unit,
     onWhatsApp: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -1105,7 +1331,9 @@ fun DriversTabContent(
         } else {
             items(drivers) { driver ->
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSelectDriver(driver) },
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     shape = RoundedCornerShape(12.dp)
@@ -1170,20 +1398,21 @@ fun DriversTabContent(
                             }
                         }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        // Call & WhatsApp with generous touch targets (~48dp) and 8dp spacing
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             // WhatsApp Button
                             IconButton(
                                 onClick = { onWhatsApp(driver.phone) },
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(44.dp)
                                     .clip(CircleShape)
                                     .background(Color(0xFFDCFCE7))
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Chat,
-                                    contentDescription = "واتساب",
+                                    contentDescription = "مراسلة واتساب",
                                     tint = Color(0xFF16A34A),
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
 
@@ -1191,15 +1420,15 @@ fun DriversTabContent(
                             IconButton(
                                 onClick = { onDial(driver.phone) },
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(44.dp)
                                     .clip(CircleShape)
                                     .background(NavyPrimary)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Phone,
-                                    contentDescription = "اتصال",
+                                    contentDescription = "اتصال هاتفي",
                                     tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -1218,17 +1447,16 @@ fun ProfileTabContent(
     isDriver: Boolean,
     activeColor: Color,
     selectedCity: String,
+    userName: String,
+    userPhone: String,
     isDriverAvailable: Boolean,
     onToggleDriverAvailability: () -> Unit,
-    onSwitchRole: () -> Unit
+    onSwitchRole: () -> Unit,
+    onOpenEditDialog: () -> Unit
 ) {
-    val context = LocalContext.current
-    var userName by remember { mutableStateOf(if (isDriver) "سائق توصيل معتمد" else "محل تجاري - ليفلينك") }
-    var userPhone by remember { mutableStateOf("0661234567") }
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Profile Header Card
@@ -1245,7 +1473,7 @@ fun ProfileTabContent(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(64.dp)
+                            .size(68.dp)
                             .clip(CircleShape)
                             .background(activeColor.copy(alpha = 0.15f))
                             .border(2.dp, activeColor, CircleShape),
@@ -1255,7 +1483,7 @@ fun ProfileTabContent(
                             imageVector = if (isDriver) Icons.Default.DeliveryDining else Icons.Default.Store,
                             contentDescription = null,
                             tint = activeColor,
-                            modifier = Modifier.size(34.dp)
+                            modifier = Modifier.size(36.dp)
                         )
                     }
 
@@ -1276,19 +1504,34 @@ fun ProfileTabContent(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Switch Role Button
-                    OutlinedButton(
-                        onClick = onSwitchRole,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = activeColor),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (isDriver) "التبديل إلى وضع صاحب المحل" else "التبديل إلى وضع الليفرور",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Switch Role Button
+                        OutlinedButton(
+                            onClick = onSwitchRole,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = activeColor),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.height(44.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isDriver) "التبديل لوضع المحل" else "التبديل لوضع الليفرور",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        // Edit Profile Button
+                        Button(
+                            onClick = onOpenEditDialog,
+                            colors = ButtonDefaults.buttonColors(containerColor = activeColor),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.height(44.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("تعديل", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
@@ -1297,7 +1540,7 @@ fun ProfileTabContent(
         // Account Details Section
         item {
             Text(
-                text = "إعدادات الحساب والمعلومات:",
+                text = "إعدادات ومعلومات الحساب:",
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onBackground
@@ -1327,7 +1570,7 @@ fun ProfileTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("رقم الهاتف للتواصل:", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("رقم الهاتف للتواصل المباشر:", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(userPhone, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
 
@@ -1338,7 +1581,7 @@ fun ProfileTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("المدينة الحالية:", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("المدينة المحددة حالياً:", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(selectedCity, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
 
@@ -1349,12 +1592,23 @@ fun ProfileTabContent(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("جاهزية التوصيل:", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("جاهزية التوصيل الحالية:", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Switch(
                                 checked = isDriverAvailable,
                                 onCheckedChange = { onToggleDriverAvailability() }
                             )
                         }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("نموذج الاستخدام المعتمد:", fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("مجاني 100٪ بدون عمولات", fontWeight = FontWeight.Bold, color = Color(0xFF16A34A), fontSize = 13.sp)
                     }
                 }
             }
@@ -1376,7 +1630,7 @@ fun ProfileTabContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "ملاحظة: البيانات محفوظة محلياً في هذا الإصدار عبر SharedPreferences. ربط الحسابات السحابية وقاعدة البيانات الخارجية سيتم إدراجه في مرحلة لاحقة.",
+                        text = "توضيح تقني: البيانات وتفضيلات الدور محفوظة محلياً في هذا الإصدار عبر SharedPreferences. الربط السحابي مع قاعدة البيانات الخارجية سيتم إدراجه في مرحلة مقبلة.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 16.sp
@@ -1388,17 +1642,20 @@ fun ProfileTabContent(
 }
 
 // -------------------------------------------------------------
-// REUSABLE OFFER CARD COMPONENT WITH REAL DIAL / WHATSAPP ACTIONS
+// REUSABLE OFFER CARD COMPONENT
 // -------------------------------------------------------------
 @Composable
 fun OfferItemCard(
     offer: DeliveryOffer,
     activeColor: Color,
+    onClick: () -> Unit,
     onDial: () -> Unit,
     onWhatsApp: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -1480,19 +1737,21 @@ fun OfferItemCard(
                     color = NavyPrimary
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // Call and WhatsApp buttons with ample 8dp spacing and comfortable ~44dp height
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     // WhatsApp Button
                     Button(
                         onClick = onWhatsApp,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        modifier = Modifier.height(40.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Chat,
-                            contentDescription = null,
+                            contentDescription = "مراسلة واتساب",
                             tint = Color.White,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("واتساب", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -1503,13 +1762,14 @@ fun OfferItemCard(
                         onClick = onDial,
                         colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary),
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                        modifier = Modifier.height(40.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Phone,
-                            contentDescription = null,
+                            contentDescription = "اتصال هاتفي",
                             tint = Color.White,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("اتصال", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
