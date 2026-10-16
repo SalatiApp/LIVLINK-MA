@@ -6,3 +6,14 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Android build outputs & caches
+.gradle/
+app/build/
+*.apk
+*.aab
+
+# Ensure Gradle wrapper files are tracked by Git
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew
+!gradlew.bat
