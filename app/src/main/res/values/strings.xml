@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">LIVLINK</string>
+    <string name="app_tagline">منصة ربط المحلات بالليفرورات</string>
+    <string name="app_description">منصة وطنية مغربية مجانية 100٪ لربط أصحاب المحلات بالليفرورات وتسهيل التواصل والتعاون بينهم في مجال التوصيل بجميع مدن المغرب.</string>
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_offers">العروض</string>
+    <string name="nav_map">الخريطة</string>
+    <string name="nav_add">إضافة</string>
+    <string name="nav_drivers">السائقون</string>
+    <string name="role_shop_owner">صاحب محل</string>
+    <string name="role_driver">ليفرور</string>
+    <string name="free_platform_badge">منصة وطنية مجانية 100٪ بدون رسوم</string>
+</resources>
