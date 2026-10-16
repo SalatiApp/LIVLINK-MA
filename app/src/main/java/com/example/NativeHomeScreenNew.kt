@@ -45,7 +45,10 @@ data class DeliveryOffer(
     val timeAgo: String,
     val details: String,
     val vehicleType: String = "دراجة نارية",
-    val priceEstimate: String = "حسب الاتفاق"
+    val priceEstimate: String = "حسب الاتفاق",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationAddress: String? = null
 )
 
 data class DriverProfile(
@@ -58,6 +61,115 @@ data class DriverProfile(
     val experience: String,
     val completedTrips: Int = 0
 )
+
+// Persistence Helpers for SharedPreferences
+fun saveOffersToPrefs(context: Context, offers: List<DeliveryOffer>) {
+    try {
+        val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
+        val jsonArr = org.json.JSONArray()
+        for (offer in offers) {
+            val obj = org.json.JSONObject()
+            obj.put("id", offer.id)
+            obj.put("title", offer.title)
+            obj.put("city", offer.city)
+            obj.put("district", offer.district)
+            obj.put("roleType", offer.roleType)
+            obj.put("phone", offer.phone)
+            obj.put("timeAgo", offer.timeAgo)
+            obj.put("details", offer.details)
+            obj.put("vehicleType", offer.vehicleType)
+            obj.put("priceEstimate", offer.priceEstimate)
+            if (offer.latitude != null) obj.put("latitude", offer.latitude)
+            if (offer.longitude != null) obj.put("longitude", offer.longitude)
+            if (offer.locationAddress != null) obj.put("locationAddress", offer.locationAddress)
+            jsonArr.put(obj)
+        }
+        prefs.edit().putString("saved_offers_json", jsonArr.toString()).apply()
+    } catch (e: Exception) {
+        // Silently preserve stability
+    }
+}
+
+fun loadOffersFromPrefs(context: Context): List<DeliveryOffer>? {
+    return try {
+        val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
+        val jsonStr = prefs.getString("saved_offers_json", null) ?: return null
+        val jsonArr = org.json.JSONArray(jsonStr)
+        val list = mutableListOf<DeliveryOffer>()
+        for (i in 0 until jsonArr.length()) {
+            val obj = jsonArr.getJSONObject(i)
+            list.add(
+                DeliveryOffer(
+                    id = obj.optString("id", System.currentTimeMillis().toString()),
+                    title = obj.optString("title", ""),
+                    city = obj.optString("city", "الدار البيضاء"),
+                    district = obj.optString("district", "وسط المدينة"),
+                    roleType = obj.optString("roleType", "طلب توصيل"),
+                    phone = obj.optString("phone", ""),
+                    timeAgo = obj.optString("timeAgo", "مؤخراً"),
+                    details = obj.optString("details", ""),
+                    vehicleType = obj.optString("vehicleType", "دراجة نارية"),
+                    priceEstimate = obj.optString("priceEstimate", "حسب الاتفاق"),
+                    latitude = if (obj.has("latitude") && !obj.isNull("latitude")) obj.optDouble("latitude") else null,
+                    longitude = if (obj.has("longitude") && !obj.isNull("longitude")) obj.optDouble("longitude") else null,
+                    locationAddress = if (obj.has("locationAddress") && !obj.isNull("locationAddress")) obj.optString("locationAddress") else null
+                )
+            )
+        }
+        if (list.isNotEmpty()) list else null
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun saveDriversToPrefs(context: Context, drivers: List<DriverProfile>) {
+    try {
+        val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
+        val jsonArr = org.json.JSONArray()
+        for (driver in drivers) {
+            val obj = org.json.JSONObject()
+            obj.put("id", driver.id)
+            obj.put("name", driver.name)
+            obj.put("city", driver.city)
+            obj.put("vehicle", driver.vehicle)
+            obj.put("phone", driver.phone)
+            obj.put("isAvailable", driver.isAvailable)
+            obj.put("experience", driver.experience)
+            obj.put("completedTrips", driver.completedTrips)
+            jsonArr.put(obj)
+        }
+        prefs.edit().putString("saved_drivers_json", jsonArr.toString()).apply()
+    } catch (e: Exception) {
+        // Silently preserve stability
+    }
+}
+
+fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
+    return try {
+        val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
+        val jsonStr = prefs.getString("saved_drivers_json", null) ?: return null
+        val jsonArr = org.json.JSONArray(jsonStr)
+        val list = mutableListOf<DriverProfile>()
+        for (i in 0 until jsonArr.length()) {
+            val obj = jsonArr.getJSONObject(i)
+            list.add(
+                DriverProfile(
+                    id = obj.optString("id", System.currentTimeMillis().toString()),
+                    name = obj.optString("name", ""),
+                    city = obj.optString("city", "الدار البيضاء"),
+                    vehicle = obj.optString("vehicle", "دراجة نارية مع صندوق"),
+                    phone = obj.optString("phone", ""),
+                    isAvailable = obj.optBoolean("isAvailable", true),
+                    experience = obj.optString("experience", "سائق متاح للتوصيل"),
+                    completedTrips = obj.optInt("completedTrips", 0)
+                )
+            )
+        }
+        if (list.isNotEmpty()) list else null
+    } catch (e: Exception) {
+        null
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,9 +200,9 @@ fun NativeHomeScreenNew(
         var profileName by remember { mutableStateOf(if (isDriver) "سائق توصيل معتمد" else "محل تجاري - ليفلينك") }
         var profilePhone by remember { mutableStateOf("0661234567") }
 
-        // Offers list
-        val offersList = remember {
-            mutableStateListOf(
+        // Persistent Offers list
+        val defaultInitialOffers = remember {
+            listOf(
                 DeliveryOffer(
                     id = "1",
                     title = "محل إلكترونيات وأكسسوارات الهواتف",
@@ -100,7 +212,10 @@ fun NativeHomeScreenNew(
                     phone = "0661001122",
                     timeAgo = "منذ 10 دقائق",
                     details = "مطلوب ليفرور لتوصيل طلبيات هواتف وأكسسوارات داخل المعاريف وسيدي معروف يومياً.",
-                    priceEstimate = "25 درهم / طلبية"
+                    priceEstimate = "25 درهم / طلبية",
+                    latitude = 33.5898,
+                    longitude = -7.6324,
+                    locationAddress = "شارع المسيرة الخضراء، المعاريف"
                 ),
                 DeliveryOffer(
                     id = "2",
@@ -123,7 +238,10 @@ fun NativeHomeScreenNew(
                     phone = "0652889900",
                     timeAgo = "منذ 45 دقيقة",
                     details = "نبحث عن سائقين لخدمة توصيل وجبات الغداء والعشاء للمنازل والشركات بانتظام.",
-                    priceEstimate = "20 درهم / توصيلة"
+                    priceEstimate = "20 درهم / توصيلة",
+                    latitude = 34.0333,
+                    longitude = -5.0000,
+                    locationAddress = "شارع الحسن الثاني، فاس الجديد"
                 ),
                 DeliveryOffer(
                     id = "4",
@@ -134,7 +252,10 @@ fun NativeHomeScreenNew(
                     phone = "0663112233",
                     timeAgo = "منذ ساعتين",
                     details = "توصيل طرود كتب ومستلزمات مكتبية للمدارس والشركات بمراكش.",
-                    priceEstimate = "30 درهم / إرسالية"
+                    priceEstimate = "30 درهم / إرسالية",
+                    latitude = 31.6341,
+                    longitude = -8.0125,
+                    locationAddress = "جيليز، شارع محمد الخامس"
                 ),
                 DeliveryOffer(
                     id = "5",
@@ -157,13 +278,23 @@ fun NativeHomeScreenNew(
                     phone = "0655667788",
                     timeAgo = "منذ 4 ساعات",
                     details = "توصيل طلبيات تجارة إلكترونية للزبائن في أكادير والدشيرة وإنزكان.",
-                    priceEstimate = "25 درهم / طلبية"
+                    priceEstimate = "25 درهم / طلبية",
+                    latitude = 30.4278,
+                    longitude = -9.5981,
+                    locationAddress = "حي السلام، أكادير"
                 )
             )
         }
 
-        val driversList = remember {
-            mutableStateListOf(
+        val offersList = remember {
+            val saved = loadOffersFromPrefs(context)
+            mutableStateListOf<DeliveryOffer>().apply {
+                addAll(saved ?: defaultInitialOffers)
+            }
+        }
+
+        val defaultInitialDrivers = remember {
+            listOf(
                 DriverProfile("d1", "يوسف العمراني", "الدار البيضاء", "دراجة نارية مع صندوق", "0661122334", true, "3 سنوات", 420),
                 DriverProfile("d2", "كريم السبتي", "الرباط", "دراجة نارية مع صندوق", "0672233445", true, "سنتان", 280),
                 DriverProfile("d3", "حمزة التازي", "فاس", "دراجة نارية", "0653344556", true, "4 سنوات", 510),
@@ -173,9 +304,16 @@ fun NativeHomeScreenNew(
             )
         }
 
-        // Helper call functions with full error handling
+        val driversList = remember {
+            val saved = loadDriversFromPrefs(context)
+            mutableStateListOf<DriverProfile>().apply {
+                addAll(saved ?: defaultInitialDrivers)
+            }
+        }
+
+        // Helper call functions with full error handling and clean normalization
         fun dialPhone(phoneNumber: String) {
-            val clean = phoneNumber.replace(" ", "").replace("-", "")
+            val clean = phoneNumber.filter { it.isDigit() || it == '+' }
             if (clean.isBlank()) {
                 Toast.makeText(context, "رقم الهاتف غير متوفر", Toast.LENGTH_SHORT).show()
                 return
@@ -189,18 +327,52 @@ fun NativeHomeScreenNew(
         }
 
         fun openWhatsApp(phoneNumber: String) {
-            val clean = phoneNumber.replace(" ", "").replace("-", "")
-            if (clean.isBlank()) {
+            val digits = phoneNumber.filter { it.isDigit() }
+            if (digits.isBlank()) {
                 Toast.makeText(context, "رقم الهاتف غير متوفر", Toast.LENGTH_SHORT).show()
                 return
             }
-            val intPhone = if (clean.startsWith("0")) clean.substring(1) else clean
-            val uri = Uri.parse("https://wa.me/212$intPhone")
+            val intPhone = when {
+                digits.startsWith("212") -> digits
+                digits.startsWith("0") -> "212" + digits.substring(1)
+                else -> "212$digits"
+            }
+            val uri = Uri.parse("https://wa.me/$intPhone")
             val intent = Intent(Intent.ACTION_VIEW, uri)
             try {
                 context.startActivity(intent)
             } catch (e: Exception) {
                 dialPhone(phoneNumber)
+            }
+        }
+
+        // Open Map for shop requests with coordinates or address
+        fun openMap(latitude: Double?, longitude: Double?, title: String, address: String? = null) {
+            val uri = if (latitude != null && longitude != null) {
+                Uri.parse("geo:$latitude,$longitude?q=$latitude,$longitude(${Uri.encode(title)})")
+            } else if (!address.isNullOrBlank()) {
+                Uri.parse("geo:0,0?q=${Uri.encode(address)}")
+            } else {
+                Toast.makeText(context, "موقع المحل غير متوفر على الخريطة", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            val mapIntent = Intent(Intent.ACTION_VIEW, uri)
+            try {
+                context.startActivity(mapIntent)
+            } catch (e: Exception) {
+                // Fallback to Google Maps Web
+                val webUri = if (latitude != null && longitude != null) {
+                    Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")
+                } else {
+                    Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encode(address ?: "")}")
+                }
+                val webIntent = Intent(Intent.ACTION_VIEW, webUri)
+                try {
+                    context.startActivity(webIntent)
+                } catch (e2: Exception) {
+                    Toast.makeText(context, "موقع المحل: ${address ?: "$latitude, $longitude"}", Toast.LENGTH_LONG).show()
+                }
             }
         }
 
@@ -579,7 +751,8 @@ fun NativeHomeScreenNew(
                         onNavigateToDrivers = { currentTab = 3 },
                         onSelectOffer = { selectedOfferForDetails = it },
                         onDial = { dialPhone(it) },
-                        onWhatsApp = { openWhatsApp(it) }
+                        onWhatsApp = { openWhatsApp(it) },
+                        onOpenMap = { lat, lng, lbl, addr -> openMap(lat, lng, lbl, addr) }
                     )
 
                     // 2. العروض
@@ -593,30 +766,68 @@ fun NativeHomeScreenNew(
                         onNavigateToAdd = { currentTab = 2 },
                         onSelectOffer = { selectedOfferForDetails = it },
                         onDial = { dialPhone(it) },
-                        onWhatsApp = { openWhatsApp(it) }
+                        onWhatsApp = { openWhatsApp(it) },
+                        onOpenMap = { lat, lng, lbl, addr -> openMap(lat, lng, lbl, addr) }
                     )
 
                     // 3. إضافة (center tab)
                     2 -> AddScreen(
-                        onDismiss = { currentTab = 0 },
+                        onDismiss = { currentTab = 1 },
                         initialType = if (isDriver) "عرض توصيل" else "طلب توصيل",
-                        onAddSubmit = { title, city, phone, details, type ->
-                            offersList.add(
-                                0,
-                                DeliveryOffer(
-                                    id = System.currentTimeMillis().toString(),
-                                    title = title,
-                                    city = city,
-                                    district = "وسط المدينة",
-                                    roleType = type,
-                                    phone = phone,
-                                    timeAgo = "الآن",
-                                    details = details,
-                                    priceEstimate = "حسب الاتفاق"
-                                )
+                        initialCity = selectedCity,
+                        onAddSubmit = { title, city, phone, details, type, lat, lng, address ->
+                            val cleanVehicle = if (type == "عرض توصيل") {
+                                if (title.contains("-")) title.substringAfter("-").trim() else "دراجة نارية مع صندوق"
+                            } else {
+                                "طلب توصيل"
+                            }
+                            val cleanName = if (type == "عرض توصيل" && title.contains("-")) {
+                                title.substringBefore("-").trim()
+                            } else {
+                                title
+                            }
+
+                            val newOffer = DeliveryOffer(
+                                id = System.currentTimeMillis().toString(),
+                                title = title,
+                                city = city,
+                                district = "وسط المدينة",
+                                roleType = type,
+                                phone = phone,
+                                timeAgo = "الآن",
+                                details = if (details.isBlank()) (if (type == "عرض توصيل") "سائق دراجة نارية جاهز للتوصيل الفوري بمدينة $city" else "طلب توصيل طلبيات بمدينة $city") else details,
+                                vehicleType = cleanVehicle,
+                                priceEstimate = "حسب الاتفاق",
+                                latitude = lat,
+                                longitude = lng,
+                                locationAddress = address
                             )
+                            offersList.add(0, newOffer)
+                            saveOffersToPrefs(context, offersList.toList())
+
+                            // If Driver offer, also add to drivers directory and persist
+                            if (type == "عرض توصيل") {
+                                val newDriver = DriverProfile(
+                                    id = "d_${System.currentTimeMillis()}",
+                                    name = cleanName,
+                                    city = city,
+                                    vehicle = cleanVehicle,
+                                    phone = phone,
+                                    isAvailable = true,
+                                    experience = "سائق متاح للتوصيل",
+                                    completedTrips = 1
+                                )
+                                driversList.add(0, newDriver)
+                                saveDriversToPrefs(context, driversList.toList())
+                            }
+
+                            // Ensure newly published city is selected so offer is immediately visible
+                            if (selectedCity != "جميع مدن المغرب" && selectedCity != city) {
+                                selectedCity = city
+                            }
+
                             Toast.makeText(context, "تم نشر إعلانك بنجاح في $city", Toast.LENGTH_SHORT).show()
-                            currentTab = 1 // Switch to Offers to view it
+                            currentTab = 1 // Switch to Offers tab immediately
                         }
                     )
 
@@ -678,21 +889,91 @@ fun NativeHomeScreenNew(
                                     fontSize = 13.sp
                                 )
                                 Text(text = "المدينة والحي: ${offer.city} • ${offer.district}", fontSize = 12.5.sp)
-                                Text(text = "تفاصيل الطلب: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp)
+                                Text(text = "تفاصيل الإعلان: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp)
                                 Text(text = "رقم الهاتف: ${offer.phone}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+
+                                // Driver Offer Info
+                                if (offer.roleType == "عرض توصيل") {
+                                    if (offer.vehicleType.isNotBlank()) {
+                                        Text(
+                                            text = "وسيلة النقل: ${offer.vehicleType}",
+                                            fontSize = 12.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = DriverOrangePrimary
+                                        )
+                                    }
+                                    if (offer.priceEstimate.isNotBlank()) {
+                                        Text(
+                                            text = "التسعيرة: ${offer.priceEstimate}",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                // Shop Location info (only if shop request and set)
+                                if (offer.roleType == "طلب توصيل") {
+                                    if (offer.latitude != null && offer.longitude != null) {
+                                        Text(
+                                            text = "موقع المحل: ${offer.locationAddress ?: "إحداثيات محددة (${offer.latitude}, ${offer.longitude})"}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = ShopBluePrimary
+                                        )
+                                    } else if (!offer.locationAddress.isNullOrBlank()) {
+                                        Text(
+                                            text = "عنوان المحل: ${offer.locationAddress}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = ShopBluePrimary
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "موقع المحل: غير محدد",
+                                            fontSize = 11.5.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
                             }
                         },
                         confirmButton = {
-                            Button(
-                                onClick = {
-                                    openWhatsApp(offer.phone)
-                                    selectedOfferForDetails = null
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
-                            ) {
-                                Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("واتساب")
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Button(
+                                    onClick = {
+                                        openWhatsApp(offer.phone)
+                                        selectedOfferForDetails = null
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Chat,
+                                        contentDescription = "واتساب",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("واتساب")
+                                }
+
+                                if (offer.roleType == "طلب توصيل" && ((offer.latitude != null && offer.longitude != null) || !offer.locationAddress.isNullOrBlank())) {
+                                    Button(
+                                        onClick = {
+                                            openMap(offer.latitude, offer.longitude, offer.title, offer.locationAddress)
+                                            selectedOfferForDetails = null
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = ShopBluePrimary)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.LocationOn,
+                                            contentDescription = "موقع المحل",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("الخريطة")
+                                    }
+                                }
                             }
                         },
                         dismissButton = {
@@ -702,7 +983,7 @@ fun NativeHomeScreenNew(
                                     selectedOfferForDetails = null
                                 }
                             ) {
-                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Phone, contentDescription = "اتصال", modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("اتصال")
                             }
@@ -738,26 +1019,31 @@ fun NativeHomeScreenNew(
                         confirmButton = {
                             Button(
                                 onClick = {
-                                    dialPhone(driver.phone)
+                                    openWhatsApp(driver.phone)
                                     selectedDriverForDetails = null
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = activeColor)
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A))
                             ) {
-                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_whatsapp),
+                                    contentDescription = "واتساب",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("اتصال مباشر")
+                                Text("واتساب")
                             }
                         },
                         dismissButton = {
                             OutlinedButton(
                                 onClick = {
-                                    openWhatsApp(driver.phone)
+                                    dialPhone(driver.phone)
                                     selectedDriverForDetails = null
                                 }
                             ) {
-                                Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Phone, contentDescription = "اتصال", modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("واتساب")
+                                Text("اتصال مباشر")
                             }
                         }
                     )
@@ -838,7 +1124,8 @@ fun HomeTabContent(
     onNavigateToDrivers: () -> Unit,
     onSelectOffer: (DeliveryOffer) -> Unit,
     onDial: (String) -> Unit,
-    onWhatsApp: (String) -> Unit
+    onWhatsApp: (String) -> Unit,
+    onOpenMap: (Double?, Double?, String, String?) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -1204,7 +1491,8 @@ fun HomeTabContent(
                     activeColor = activeColor,
                     onClick = { onSelectOffer(offer) },
                     onDial = { onDial(offer.phone) },
-                    onWhatsApp = { onWhatsApp(offer.phone) }
+                    onWhatsApp = { onWhatsApp(offer.phone) },
+                    onOpenMap = onOpenMap
                 )
             }
         }
@@ -1223,7 +1511,8 @@ fun OffersTabContent(
     onNavigateToAdd: () -> Unit,
     onSelectOffer: (DeliveryOffer) -> Unit,
     onDial: (String) -> Unit,
-    onWhatsApp: (String) -> Unit
+    onWhatsApp: (String) -> Unit,
+    onOpenMap: (Double?, Double?, String, String?) -> Unit
 ) {
     var filterType by remember { mutableStateOf("الكل") } // "الكل", "طلب توصيل", "عرض توصيل"
 
@@ -1248,13 +1537,14 @@ fun OffersTabContent(
             ) {
                 Column {
                     Text(
-                        text = if (isDriver) "سوق طلبيات المحلات" else "سوق العروض والطلبيات",
+                        text = "سوق العروض والطلبيات",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "المدينة: $selectedCity (${displayOffers.size} إعلان)",
+                        text = if (isDriver) "المدينة: $selectedCity (${displayOffers.size} طلبيات وعروض متاحة)"
+                               else "المدينة: $selectedCity (${displayOffers.size} طلب وعرض معتمد)",
                         fontSize = 11.5.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1326,7 +1616,8 @@ fun OffersTabContent(
                     activeColor = activeColor,
                     onClick = { onSelectOffer(offer) },
                     onDial = { onDial(offer.phone) },
-                    onWhatsApp = { onWhatsApp(offer.phone) }
+                    onWhatsApp = { onWhatsApp(offer.phone) },
+                    onOpenMap = onOpenMap
                 )
             }
         }
@@ -1712,8 +2003,11 @@ fun OfferItemCard(
     activeColor: Color,
     onClick: () -> Unit,
     onDial: () -> Unit,
-    onWhatsApp: () -> Unit
+    onWhatsApp: () -> Unit,
+    onOpenMap: ((Double?, Double?, String, String?) -> Unit)? = null
 ) {
+    val isDriverOffer = offer.roleType == "عرض توصيل"
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1729,6 +2023,7 @@ fun OfferItemCard(
                 .fillMaxWidth()
                 .padding(14.dp)
         ) {
+            // Header Row: Role Badge + City/District + Time
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1739,17 +2034,35 @@ fun OfferItemCard(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
                             .background(
-                                if (offer.roleType == "طلب توصيل") ShopBluePrimary.copy(alpha = 0.12f)
+                                if (!isDriverOffer) ShopBluePrimary.copy(alpha = 0.12f)
                                 else DriverOrangePrimary.copy(alpha = 0.12f)
                             )
-                            .padding(horizontal = 7.dp, vertical = 3.dp)
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
-                        Text(
-                            text = offer.roleType,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = if (offer.roleType == "طلب توصيل") ShopBluePrimary else DriverOrangePrimary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isDriverOffer) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
+                                    contentDescription = null,
+                                    tint = DriverOrangePrimary,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Store,
+                                    contentDescription = null,
+                                    tint = ShopBluePrimary,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = if (isDriverOffer) "عرض توصيل (ليفرور)" else "طلب توصيل (محل)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.5.sp,
+                                color = if (!isDriverOffer) ShopBluePrimary else DriverOrangePrimary
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -1762,19 +2075,72 @@ fun OfferItemCard(
 
                 Text(
                     text = offer.timeAgo,
-                    fontSize = 12.5.sp,
+                    fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Title
             Text(
                 text = offer.title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
                 color = MaterialTheme.colorScheme.onSurface
             )
+
+            // Distinctive Vehicle Badge for Driver Offer
+            if (isDriverOffer && offer.vehicleType.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(DriverOrangePrimary.copy(alpha = 0.08f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
+                        contentDescription = null,
+                        tint = DriverOrangePrimary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = "وسيلة النقل: ${offer.vehicleType}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = DriverOrangePrimary
+                    )
+                    if (offer.priceEstimate.isNotBlank() && offer.priceEstimate != "حسب الاتفاق") {
+                        Text(
+                            text = " • ${offer.priceEstimate}",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Location address for Shop Request
+            if (!isDriverOffer && !offer.locationAddress.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = ShopBluePrimary,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = offer.locationAddress ?: "",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 
@@ -1787,6 +2153,7 @@ fun OfferItemCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            // Actions row: Phone & Functional Buttons (WhatsApp, Dial, Location)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1799,24 +2166,24 @@ fun OfferItemCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // Call and WhatsApp buttons with ample 8dp spacing and comfortable ~44dp height
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Buttons row
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     // WhatsApp Button
                     Button(
                         onClick = onWhatsApp,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                        modifier = Modifier.height(40.dp)
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.height(38.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Chat,
                             contentDescription = "مراسلة واتساب",
                             tint = Color.White,
-                            modifier = Modifier.size(15.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("واتساب", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("واتساب", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
 
                     // Dial Button
@@ -1824,17 +2191,37 @@ fun OfferItemCard(
                         onClick = onDial,
                         colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
                         shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                        modifier = Modifier.height(40.dp)
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.height(38.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Phone,
                             contentDescription = "اتصال هاتفي",
                             tint = Color.White,
-                            modifier = Modifier.size(15.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("اتصال", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("اتصال", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+
+                    // Location Button (for Shop orders with coordinates or address)
+                    if (!isDriverOffer && ((offer.latitude != null && offer.longitude != null) || !offer.locationAddress.isNullOrBlank()) && onOpenMap != null) {
+                        Button(
+                            onClick = { onOpenMap(offer.latitude, offer.longitude, offer.title, offer.locationAddress) },
+                            colors = ButtonDefaults.buttonColors(containerColor = ShopBluePrimary),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.height(38.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "موقع المحل",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text("الموقع", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
                     }
                 }
             }
