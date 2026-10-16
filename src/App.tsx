@@ -6,7 +6,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Store,
-  Bike,
   Phone,
   MessageCircle,
   MapPin,
@@ -29,6 +28,41 @@ import {
   ArrowRightLeft,
   Navigation
 } from 'lucide-react';
+
+// Dedicated Vector Icon for Livreur: Delivery Driver on Motorcycle with Delivery Box
+export function DeliveryMotorcycleBoxIcon({
+  className = 'w-4 h-4',
+  color = 'currentColor'
+}: {
+  className?: string;
+  color?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill={color}
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Insulated Delivery Box mounted on rear rack behind driver */}
+      <path d="M2 6h5.8c0.45 0 0.8 0.35 0.8 0.8v4.6c0 0.45-0.35 0.8-0.8 0.8H2c-0.45 0-0.8-0.35-0.8-0.8V6.8c0-0.45 0.35-0.8 0.8-0.8z M2.6 8.2h4.6v1.2H2.6z" />
+      {/* Driver Head & Safety Helmet */}
+      <path d="M13.2 2.4c1.16 0 2.1 0.94 2.1 2.1s-0.94 2.1-2.1 2.1s-2.1-0.94-2.1-2.1s0.94-2.1 2.1-2.1z" />
+      {/* Courier Riding Silhouette & Motorcycle Chassis */}
+      <path d="M11.8 7.2l2.7 2.6l3-0.8l-0.3-1.2l-2.4 0.6l-2-1.9z M8 12.2h4.8l2 2.8h-2.2l-1.4-1.8H8z M16.8 8l2.6 8.2h-1.6l-2.2-7.2z M4 12.2l1.5 4.3h1.4l-1.7-4.3z" />
+      {/* Rear Wheel with Hub Cutout */}
+      <path
+        fillRule="evenodd"
+        d="M5.5 14.5c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.6c-0.77 0-1.4 0.63-1.4 1.4s0.63 1.4 1.4 1.4s1.4-0.63 1.4-1.4s-0.63-1.4-1.4-1.4z"
+      />
+      {/* Front Wheel with Hub Cutout */}
+      <path
+        fillRule="evenodd"
+        d="M18.5 14.5c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.6c-0.77 0-1.4 0.63-1.4 1.4s0.63 1.4 1.4 1.4s1.4-0.63 1.4-1.4s-0.63-1.4-1.4-1.4z"
+      />
+    </svg>
+  );
+}
 
 interface DeliveryOffer {
   id: string;
@@ -102,11 +136,11 @@ export default function App() {
   };
 
   const isDriver = selectedRole === 'ليفرور';
-  // Centralized Mode Theme Colors: Blue for Shop Owner, Orange for Delivery Driver
-  const activeColor = isDriver ? '#EA580C' : '#2563EB';
+  // Centralized Mode Theme Colors: Darker Blue for Shop Owner, Orange for Delivery Driver
+  const activeColor = isDriver ? '#EA580C' : '#1E40AF';
   const activeBgLight = isDriver ? 'bg-orange-50' : 'bg-blue-50';
   const activeBorder = isDriver ? 'border-orange-200' : 'border-blue-200';
-  const activeText = isDriver ? 'text-orange-600' : 'text-blue-600';
+  const activeText = isDriver ? 'text-orange-600' : 'text-blue-700';
 
   // Add Screen Form State
   const [addType, setAddType] = useState<'طلب توصيل' | 'عرض توصيل'>(isDriver ? 'عرض توصيل' : 'طلب توصيل');
@@ -301,39 +335,39 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Reorganized Top Icons: 1. Store Icon, 2. Delivery Bike with Box, 3. Dark/Light Mode */}
-              <div className="flex items-center gap-2">
+              {/* Refined Top Icons: 1. Store Icon, 2. Delivery Motorcycle with Box, 3. Dark/Light Mode */}
+              <div className="flex items-center gap-1.5">
                 {/* 1. Store Icon (Switches to Shop Owner mode) */}
                 <button
                   onClick={() => handleRoleChange('صاحب محل')}
                   title="وضع صاحب المحل"
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition border ${
                     !isDriver
-                      ? 'bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-500/30'
-                      : 'bg-slate-800 text-slate-400 border-transparent hover:text-white'
+                      ? 'bg-[#1E40AF] text-white border-blue-400 shadow-sm ring-1 ring-blue-700/40'
+                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
                   }`}
                 >
                   <Store className="w-4 h-4" />
                 </button>
 
-                {/* 2. Delivery Bike with Box (Switches to Driver mode) */}
+                {/* 2. Delivery Motorcycle with Box (Switches to Driver mode) */}
                 <button
                   onClick={() => handleRoleChange('ليفرور')}
                   title="وضع سائق التوصيل (ليفرور)"
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition border ${
                     isDriver
-                      ? 'bg-orange-600 text-white border-orange-400 shadow-md ring-2 ring-orange-500/30'
-                      : 'bg-slate-800 text-slate-400 border-transparent hover:text-white'
+                      ? 'bg-orange-600 text-white border-orange-400 shadow-sm ring-1 ring-orange-500/40'
+                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
                   }`}
                 >
-                  <Bike className="w-4 h-4" />
+                  <DeliveryMotorcycleBoxIcon className="w-4 h-4" />
                 </button>
 
                 {/* 3. Dark Mode Toggle */}
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
                   title="تبديل الوضع الليلي / النهاري"
-                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 transition"
                 >
                   {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
                 </button>
@@ -353,10 +387,10 @@ export default function App() {
                 className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border ${
                   isDriver
                     ? 'bg-orange-950/60 border-orange-600/50 text-orange-300'
-                    : 'bg-blue-950/60 border-blue-600/50 text-blue-300'
+                    : 'bg-blue-950/60 border-blue-800 text-blue-300'
                 }`}
               >
-                {isDriver ? <Bike className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
+                {isDriver ? <DeliveryMotorcycleBoxIcon className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
                 <span>{isDriver ? 'وضع الليفرور (نشط)' : 'وضع صاحب المحل (نشط)'}</span>
               </button>
 
@@ -379,7 +413,7 @@ export default function App() {
           </div>
 
           {/* App Body Content */}
-          <div className={`flex-1 overflow-y-auto p-3.5 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
+          <div className={`flex-1 overflow-y-auto p-3.5 ${isDarkMode ? 'bg-[#0A0F1D]' : 'bg-slate-100/90'}`}>
             {/* TAB 0: HOME */}
             {currentTab === 0 && (
               <div className="space-y-3 pb-8">
@@ -484,10 +518,10 @@ export default function App() {
 
                     <button
                       onClick={() => setCurrentTab(3)}
-                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
+                      className="p-3 rounded-xl bg-white dark:bg-[#162032] border border-slate-200 dark:border-slate-700/60 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
                     >
                       <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center mb-1.5">
-                        <Bike className="w-4 h-4" />
+                        <DeliveryMotorcycleBoxIcon className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">الليفرورات</span>
                       <span className="text-[10px] text-slate-500">سائقون معتمدون</span>
@@ -806,7 +840,7 @@ export default function App() {
                               : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                           }`}
                         >
-                          <Bike className="w-5 h-5" />
+                          <DeliveryMotorcycleBoxIcon className="w-5 h-5" />
                         </div>
 
                         <div>
@@ -863,7 +897,7 @@ export default function App() {
                     className="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-2 border-2"
                     style={{ backgroundColor: `${activeColor}15`, borderColor: activeColor, color: activeColor }}
                   >
-                    {isDriver ? <Bike className="w-8 h-8" /> : <Store className="w-8 h-8" />}
+                    {isDriver ? <DeliveryMotorcycleBoxIcon className="w-8 h-8" /> : <Store className="w-8 h-8" />}
                   </div>
 
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -941,7 +975,7 @@ export default function App() {
               { label: 'الرئيسية', icon: Store, index: 0 },
               { label: 'العروض', icon: ListFilter, index: 1 },
               { label: 'إضافة', icon: Plus, index: 2 },
-              { label: 'الليفرورات', icon: Bike, index: 3 },
+              { label: 'الليفرورات', icon: DeliveryMotorcycleBoxIcon, index: 3 },
               { label: 'حسابي', icon: User, index: 4 }
             ].map(({ label, icon: IconComponent, index }) => {
               const isSelected = currentTab === index;
@@ -997,7 +1031,7 @@ export default function App() {
                   key={tab}
                   onClick={() => setSelectedInspectorFile(tab)}
                   className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                    selectedInspectorFile === tab ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'
+                    selectedInspectorFile === tab ? 'bg-[#1E40AF] text-white' : 'bg-slate-800 text-slate-300'
                   }`}
                 >
                   {tab}.kt
@@ -1011,9 +1045,9 @@ export default function App() {
 {`// app/src/main/java/com/example/NativeHomeScreenNew.kt
 // 1. المساحة العلوية: statusBarsPadding() لمنع التداخل مع شريط حالة Android.
 // 2. المساحة السفلية: navigationBarsPadding() و contentPadding كافية لمنع اختفاء آخر عنصر.
-// 3. الأيقونات العلوية: أيقونة المحل وأيقونة الدراجة النارية بصندوق التوصيل والوضع الليلي.
+// 3. الأيقونات العلوية: أيقونة المحل وأيقونة الدراجة النارية بصندوق التوصيل والوضع الليلي (مقاس موحد 34dp ومسافات متساوية 6dp).
 // 4. الشريط السفلي (5 عناصر مرتبة): الرئيسية، العروض، إضافة، الليفرورات، حسابي.
-// 5. الوضمان المستقلان: الأزرق لصاحب المحل والبرتقالي لليفرور.`}
+// 5. الوضمان المستقلان: الأزرق الداكن الملكي لصاحب المحل (#1E40AF) والبرتقالي لليفرور (#EA580C).`}
                 </pre>
               )}
               {selectedInspectorFile === 'AddScreen' && (
@@ -1026,8 +1060,8 @@ export default function App() {
               {selectedInspectorFile === 'Theme' && (
                 <pre>
 {`// app/src/main/java/com/example/ui/theme/Theme.kt
-// نظام ألوان مركزي: Blue (ShopBluePrimary #2563EB) و Orange (DriverOrangePrimary #EA580C)
-// تحديث ألوان شريط الحالة تلقائياً دون إعادة تشغيل التطبيق.`}
+// نظام ألوان مركزي: Blue الملكي الداكن (ShopBluePrimary #1E40AF) و Orange (DriverOrangePrimary #EA580C)
+// خلفية مساحة محتوى مريحة للعين في الوضع الداكن (#0A0F1D) مع تباين واضح للبطاقات (#162032) والنصوص.`}
                 </pre>
               )}
               {selectedInspectorFile === 'MainActivity' && (
@@ -1041,7 +1075,7 @@ export default function App() {
 
             <div className="p-3 bg-slate-900 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
               <span>جميع التعديلات مطبقة في مسارات Android الأصلية وجاهزة للبناء</span>
-              <button onClick={() => setShowCodeInspector(false)} className="px-3 py-1 bg-blue-600 text-white rounded-lg font-bold">
+              <button onClick={() => setShowCodeInspector(false)} className="px-3 py-1 bg-[#1E40AF] hover:bg-blue-900 text-white rounded-lg font-bold">
                 إغلاق
               </button>
             </div>

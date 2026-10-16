@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.theme.BackgroundDark
 import com.example.ui.theme.DriverOrangePrimary
 import com.example.ui.theme.NavyPrimary
 import com.example.ui.theme.NavySecondary
@@ -256,10 +257,10 @@ fun NativeHomeScreenNew(
                                 }
                             }
 
-                            // Reorganized Top Bar Icons (Uniform 38dp, 48dp touch area, properly spaced)
+                            // Refined Top Bar Icons (Equal 34dp size, uniform 6dp spacing, no crowding)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 // 1. Store Icon (Shop Owner mode toggle)
                                 IconButton(
@@ -268,20 +269,20 @@ fun NativeHomeScreenNew(
                                         Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل (الأزرق)", Toast.LENGTH_SHORT).show()
                                     },
                                     modifier = Modifier
-                                        .size(38.dp)
+                                        .size(34.dp)
                                         .clip(CircleShape)
                                         .background(if (!isDriver) ShopBluePrimary else NavySecondary)
                                         .border(
-                                            width = if (!isDriver) 1.5.dp else 0.dp,
-                                            color = if (!isDriver) Color.White.copy(alpha = 0.9f) else Color.Transparent,
+                                            width = 1.2.dp,
+                                            color = if (!isDriver) Color.White.copy(alpha = 0.95f) else Color(0xFF334155),
                                             shape = CircleShape
                                         )
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Store,
                                         contentDescription = "وضع صاحب المحل",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
+                                        tint = if (!isDriver) Color.White else Color(0xFFCBD5E1),
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
 
@@ -292,20 +293,20 @@ fun NativeHomeScreenNew(
                                         Toast.makeText(context, "تم التبديل إلى وضع سائق التوصيل (البرتقالي)", Toast.LENGTH_SHORT).show()
                                     },
                                     modifier = Modifier
-                                        .size(38.dp)
+                                        .size(34.dp)
                                         .clip(CircleShape)
                                         .background(if (isDriver) DriverOrangePrimary else NavySecondary)
                                         .border(
-                                            width = if (isDriver) 1.5.dp else 0.dp,
-                                            color = if (isDriver) Color.White.copy(alpha = 0.9f) else Color.Transparent,
+                                            width = 1.2.dp,
+                                            color = if (isDriver) Color.White.copy(alpha = 0.95f) else Color(0xFF334155),
                                             shape = CircleShape
                                         )
                                 ) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                         contentDescription = "وضع سائق التوصيل (ليفرور)",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
+                                        tint = if (isDriver) Color.White else Color(0xFFCBD5E1),
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
 
@@ -313,15 +314,20 @@ fun NativeHomeScreenNew(
                                 IconButton(
                                     onClick = onToggleDarkMode,
                                     modifier = Modifier
-                                        .size(38.dp)
+                                        .size(34.dp)
                                         .clip(CircleShape)
                                         .background(NavySecondary)
+                                        .border(
+                                            width = 1.2.dp,
+                                            color = Color(0xFF334155),
+                                            shape = CircleShape
+                                        )
                                 ) {
                                     Icon(
                                         imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
                                         contentDescription = "تغيير الوضع الليلي / النهاري",
                                         tint = if (isDarkMode) Color(0xFFFBBF24) else Color(0xFFE2E8F0),
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
                             }
@@ -893,14 +899,23 @@ fun HomeTabContent(
         // Driver Availability Toggle Card (Only in Driver Mode)
         if (isDriver) {
             item {
+                val isDark = MaterialTheme.colorScheme.background == BackgroundDark
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isDriverAvailable) Color(0xFFECFDF5) else Color(0xFFF1F5F9)
+                        containerColor = if (isDriverAvailable) {
+                            if (isDark) Color(0xFF064E3B).copy(alpha = 0.45f) else Color(0xFFECFDF5)
+                        } else {
+                            if (isDark) MaterialTheme.colorScheme.surface else Color(0xFFF1F5F9)
+                        }
                     ),
                     border = CardDefaults.outlinedCardBorder().copy(
                         brush = androidx.compose.ui.graphics.SolidColor(
-                            if (isDriverAvailable) Color(0xFFA7F3D0) else Color(0xFFCBD5E1)
+                            if (isDriverAvailable) {
+                                if (isDark) Color(0xFF059669) else Color(0xFFA7F3D0)
+                            } else {
+                                if (isDark) Color(0xFF334155) else Color(0xFFCBD5E1)
+                            }
                         )
                     ),
                     shape = RoundedCornerShape(12.dp)
@@ -925,16 +940,19 @@ fun HomeTabContent(
                                     text = if (isDriverAvailable) "حالتك: متاح حالياً للتوصيل" else "حالتك: غير متاح حالياً",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp,
-                                    color = if (isDriverAvailable) Color(0xFF065F46) else Color(0xFF334155)
+                                    color = if (isDriverAvailable) {
+                                        if (isDark) Color(0xFF6EE7B7) else Color(0xFF065F46)
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    }
                                 )
                                 Text(
                                     text = if (isDriverAvailable) "المحلات في $selectedCity يمكنها الاتصال بك الآن" else "إعلاناتك متوقفة مؤقتاً",
                                     fontSize = 11.sp,
-                                    color = Color(0xFF64748B)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-
                         Switch(
                             checked = isDriverAvailable,
                             onCheckedChange = { onToggleDriverAvailability() },
@@ -1346,17 +1364,28 @@ fun DriversTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            val isDark = MaterialTheme.colorScheme.background == BackgroundDark
                             Box(
                                 modifier = Modifier
                                     .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(if (driver.isAvailable) Color(0xFFDCFCE7) else Color(0xFFF1F5F9)),
+                                    .background(
+                                        if (driver.isAvailable) {
+                                            if (isDark) Color(0xFF064E3B).copy(alpha = 0.5f) else Color(0xFFDCFCE7)
+                                        } else {
+                                            if (isDark) Color(0xFF334155) else Color(0xFFF1F5F9)
+                                        }
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.DeliveryDining,
                                     contentDescription = null,
-                                    tint = if (driver.isAvailable) Color(0xFF16A34A) else Color.Gray,
+                                    tint = if (driver.isAvailable) {
+                                        if (isDark) Color(0xFF34D399) else Color(0xFF16A34A)
+                                    } else {
+                                        if (isDark) Color(0xFF94A3B8) else Color.Gray
+                                    },
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -1734,7 +1763,7 @@ fun OfferItemCard(
                     text = "الهاتف: ${offer.phone}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.5.sp,
-                    color = NavyPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 // Call and WhatsApp buttons with ample 8dp spacing and comfortable ~44dp height
