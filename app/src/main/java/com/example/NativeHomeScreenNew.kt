@@ -216,9 +216,9 @@ fun NativeHomeScreenNew(
                         modifier = Modifier
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
-                        // Header row: Brand, Slogan, and Reorganized Top Bar Icons
+                        // 1. Header row: Brand, Slogan, and Reorganized Top Bar Icons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -243,7 +243,7 @@ fun NativeHomeScreenNew(
                                         color = Color.White
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(9.dp))
                                 Column {
                                     Text(
                                         text = "LIVLINK",
@@ -253,27 +253,26 @@ fun NativeHomeScreenNew(
                                     )
                                     Text(
                                         text = "منصة ربط المحلات بالليفرورات",
-                                        fontSize = 12.sp,
-                                        color = Color(0xFFCBD5E1),
+                                        fontSize = 12.5.sp,
+                                        color = Color(0xFFE2E8F0),
                                         fontWeight = FontWeight.Medium,
-                                        maxLines = 1
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
 
-                            // Refined Top Bar Icons (Completely separated, uniform 32dp size, equal 8dp spacing, no overlapping)
+                            // Three completely independent circular buttons
+                            // Guaranteed 32dp size, 8dp equal spacing, zero overlapping bounds
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.wrapContentSize()
                             ) {
                                 // 1. Store Icon (Shop Owner mode toggle)
-                                IconButton(
-                                    onClick = {
-                                        onRoleChange("صاحب محل")
-                                        Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل (الأزرق الملكي)", Toast.LENGTH_SHORT).show()
-                                    },
+                                Box(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(CircleShape)
@@ -283,6 +282,11 @@ fun NativeHomeScreenNew(
                                             color = if (!isDriver) Color(0xFF93C5FD) else Color(0xFF334155),
                                             shape = CircleShape
                                         )
+                                        .clickable {
+                                            onRoleChange("صاحب محل")
+                                            Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل (الأزرق الملكي)", Toast.LENGTH_SHORT).show()
+                                        },
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Store,
@@ -293,11 +297,7 @@ fun NativeHomeScreenNew(
                                 }
 
                                 // 2. Motorcycle with delivery cargo box icon (Driver mode toggle)
-                                IconButton(
-                                    onClick = {
-                                        onRoleChange("ليفرور")
-                                        Toast.makeText(context, "تم التبديل إلى وضع سائق التوصيل (البرتقالي)", Toast.LENGTH_SHORT).show()
-                                    },
+                                Box(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(CircleShape)
@@ -307,6 +307,11 @@ fun NativeHomeScreenNew(
                                             color = if (isDriver) Color(0xFFFED7AA) else Color(0xFF334155),
                                             shape = CircleShape
                                         )
+                                        .clickable {
+                                            onRoleChange("ليفرور")
+                                            Toast.makeText(context, "تم التبديل إلى وضع سائق التوصيل (البرتقالي)", Toast.LENGTH_SHORT).show()
+                                        },
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
@@ -317,8 +322,7 @@ fun NativeHomeScreenNew(
                                 }
 
                                 // 3. Dark/Light Mode Icon
-                                IconButton(
-                                    onClick = onToggleDarkMode,
+                                Box(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(CircleShape)
@@ -328,6 +332,10 @@ fun NativeHomeScreenNew(
                                             color = Color(0xFF334155),
                                             shape = CircleShape
                                         )
+                                        .clickable {
+                                            onToggleDarkMode()
+                                        },
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
@@ -339,57 +347,57 @@ fun NativeHomeScreenNew(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(11.dp))
 
-                        // Corrected Official Banner (Exact phrase, without redundant tag)
+                        // 2. Official National Banner (Balanced spacing and contrast)
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = NavySecondary
                             ),
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(9.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Verified,
                                     contentDescription = null,
                                     tint = activeColor,
-                                    modifier = Modifier.size(15.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "منصة وطنية مغربية مجانية 100% تغطى جميع مدن المملكة",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFFE2E8F0),
-                                    fontWeight = FontWeight.Normal
+                                    fontSize = 12.5.sp,
+                                    color = Color(0xFFF1F5F9),
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(11.dp))
 
-                        // Role Indicator & City Selector Row
+                        // 3. Role Indicator & City Selector Row
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Current Active Role Badge (Clickable to switch)
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(9.dp))
                                     .background(activeColor.copy(alpha = 0.18f))
-                                    .border(1.dp, activeColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                    .border(1.dp, activeColor.copy(alpha = 0.5f), RoundedCornerShape(9.dp))
                                     .clickable {
                                         val newRole = if (isDriver) "صاحب محل" else "ليفرور"
                                         onRoleChange(newRole)
                                         Toast.makeText(context, "الوضع النشط: $newRole", Toast.LENGTH_SHORT).show()
                                     }
-                                    .padding(horizontal = 8.dp, vertical = 7.dp),
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -398,20 +406,20 @@ fun NativeHomeScreenNew(
                                             painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                             contentDescription = null,
                                             tint = activeColor,
-                                            modifier = Modifier.size(15.dp)
+                                            modifier = Modifier.size(16.dp)
                                         )
                                     } else {
                                         Icon(
                                             imageVector = Icons.Default.Store,
                                             contentDescription = null,
                                             tint = activeColor,
-                                            modifier = Modifier.size(15.dp)
+                                            modifier = Modifier.size(16.dp)
                                         )
                                     }
-                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = if (isDriver) "وضع الليفرور (نشط)" else "وضع صاحب المحل (نشط)",
-                                        fontSize = 12.sp,
+                                        fontSize = 12.5.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White
                                     )
@@ -422,10 +430,10 @@ fun NativeHomeScreenNew(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(RoundedCornerShape(9.dp))
                                     .background(NavySecondary)
                                     .clickable { cityDropdownExpanded = true }
-                                    .padding(horizontal = 8.dp, vertical = 7.dp)
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -440,12 +448,12 @@ fun NativeHomeScreenNew(
                                             imageVector = Icons.Default.LocationOn,
                                             contentDescription = null,
                                             tint = activeColor,
-                                            modifier = Modifier.size(14.dp)
+                                            modifier = Modifier.size(15.dp)
                                         )
-                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Spacer(modifier = Modifier.width(5.dp))
                                         Text(
                                             text = selectedCity,
-                                            fontSize = 11.5.sp,
+                                            fontSize = 12.5.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = Color.White,
                                             maxLines = 1,
@@ -456,7 +464,7 @@ fun NativeHomeScreenNew(
                                         imageVector = Icons.Default.ArrowDropDown,
                                         contentDescription = null,
                                         tint = Color.White,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
 
@@ -466,7 +474,7 @@ fun NativeHomeScreenNew(
                                 ) {
                                     MOROCCAN_CITIES.forEach { city ->
                                         DropdownMenuItem(
-                                            text = { Text(city, fontSize = 12.sp) },
+                                            text = { Text(city, fontSize = 13.sp) },
                                             onClick = {
                                                 selectedCity = city
                                                 cityDropdownExpanded = false
@@ -524,7 +532,7 @@ fun NativeHomeScreenNew(
                                 label = {
                                     Text(
                                         text = label,
-                                        fontSize = 11.5.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                         color = if (isSelected) activeColor else Color(0xFFCBD5E1)
                                     )
@@ -972,7 +980,7 @@ fun HomeTabContent(
                                 )
                                 Text(
                                     text = if (isDriverAvailable) "المحلات في $selectedCity يمكنها الاتصال بك الآن" else "إعلاناتك متوقفة مؤقتاً",
-                                    fontSize = 11.sp,
+                                    fontSize = 12.5.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -995,7 +1003,7 @@ fun HomeTabContent(
             Text(
                 text = "الوصول السريع والخدمات:",
                 fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
+                fontSize = 14.5.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
@@ -1038,12 +1046,12 @@ fun HomeTabContent(
                         Text(
                             text = if (isDriver) "طلبيات المحلات" else "سوق العروض",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.5.sp,
+                            fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "${offers.size} إعلان",
-                            fontSize = 11.5.sp,
+                            fontSize = 12.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -1082,12 +1090,12 @@ fun HomeTabContent(
                         Text(
                             text = if (isDriver) "نشر عرض" else "طلب ليفرور",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.5.sp,
+                            fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "نشر مجاني",
-                            fontSize = 11.5.sp,
+                            fontSize = 12.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -1127,12 +1135,12 @@ fun HomeTabContent(
                         Text(
                             text = "الليفرورات",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.5.sp,
+                            fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "دليل السائقين",
-                            fontSize = 11.5.sp,
+                            fontSize = 12.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -1420,7 +1428,7 @@ fun DriversTabContent(
                                     Text(
                                         text = driver.name,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
+                                        fontSize = 14.5.sp,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
@@ -1428,11 +1436,11 @@ fun DriversTabContent(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(4.dp))
                                             .background(if (driver.isAvailable) Color(0xFFDCFCE7) else Color(0xFFE2E8F0))
-                                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
                                             text = if (driver.isAvailable) "متاح" else "مشغول",
-                                            fontSize = 9.5.sp,
+                                            fontSize = 11.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (driver.isAvailable) Color(0xFF16A34A) else Color.Gray
                                         )
@@ -1440,12 +1448,12 @@ fun DriversTabContent(
                                 }
                                 Text(
                                     text = "${driver.city} • ${driver.vehicle} (${driver.experience})",
-                                    fontSize = 11.5.sp,
+                                    fontSize = 12.5.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = "${driver.completedTrips} توصيلة ناجحة",
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     color = activeColor,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -1739,14 +1747,14 @@ fun OfferItemCard(
                         Text(
                             text = offer.roleType,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 10.5.sp,
+                            fontSize = 12.sp,
                             color = if (offer.roleType == "طلب توصيل") ShopBluePrimary else DriverOrangePrimary
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "${offer.city} • ${offer.district}",
-                        fontSize = 12.5.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1754,7 +1762,7 @@ fun OfferItemCard(
 
                 Text(
                     text = offer.timeAgo,
-                    fontSize = 11.5.sp,
+                    fontSize = 12.5.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

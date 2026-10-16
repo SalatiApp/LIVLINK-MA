@@ -47,21 +47,23 @@ export function DeliveryMotorcycleBoxIcon({
       {/* Insulated Cargo Delivery Box mounted on rear rack behind driver */}
       <path
         fillRule="evenodd"
-        d="M2 6h5.5c0.55 0 1 0.45 1 1v5c0 0.55-0.45 1-1 1H2c-0.55 0-1-0.45-1-1V7c0-0.55 0.45-1 1-1zm0.8 1.8h3.9v1.4H2.8z"
+        d="M2 6.5h5.5c0.55 0 1 0.45 1 1v5c0 0.55-0.45 1-1 1H2c-0.55 0-1-0.45-1-1v-5c0-0.55 0.45-1 1-1zm1 1.7h3.5v1.2H3z"
       />
-      {/* Driver Head & Protective Helmet */}
-      <path d="M13.5 3c1.1 0 2 0.9 2 2s-0.9 2-2 2s-2-0.9-2-2s0.9-2 2-2z" />
-      {/* Driver Torso, Handlebars & Motorcycle Chassis Frame */}
-      <path d="M11.8 7.2l2.7 2.6l3-0.8l-0.3-1.2l-2.4 0.6l-2-1.9z M9.2 12.2h4l2.2 2.8h-2.2l-1.4-1.8H9.2z M17 8l2.6 8.2h-1.6l-2.2-7.2z M4 12.5l1.6 4.2h1.4l-1.7-4.2z" />
-      {/* Rear Wheel with Cutout Hub */}
+      {/* Driver Head & Protective Helmet with Visor */}
+      <path d="M13.5 3c1.38 0 2.5 1.12 2.5 2.5c0 1.38-1.12 2.5-2.5 2.5c-1.38 0-2.5-1.12-2.5-2.5c0-1.38 1.12-2.5 2.5-2.5z" />
+      {/* Driver Torso, Handlebars, Front Fork & Motorcycle Chassis Frame */}
+      <path d="M11 8.5h2.2l2.3 2.4l2.5-0.6v1.2l-2.1 0.5l-1.6 2H16l2.4 2.2l-1 0.8l-2.2-2h-2.5l-1-1.3l-0.7 0.7H8.5v-1.4l1.3-1.3z" />
+      {/* Rear Carrier Rack connecting Delivery Box to Rear Axis */}
+      <path d="M3.5 13.5h2v2h-2zm3.5 0h1.5v2H7z" />
+      {/* Rear Motorcycle Wheel with Cutout Hub */}
       <path
         fillRule="evenodd"
-        d="M5.5 14c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.6c-0.77 0-1.4 0.63-1.4 1.4s0.63 1.4 1.4 1.4s1.4-0.63 1.4-1.4s-0.63-1.4-1.4-1.4z"
+        d="M5.5 14.5c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.5c-0.83 0-1.5 0.67-1.5 1.5s0.67 1.5 1.5 1.5s1.5-0.67 1.5-1.5s-0.67-1.5-1.5-1.5z"
       />
-      {/* Front Wheel with Cutout Hub */}
+      {/* Front Motorcycle Wheel with Cutout Hub */}
       <path
         fillRule="evenodd"
-        d="M18.5 14c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.6c-0.77 0-1.4 0.63-1.4 1.4s0.63 1.4 1.4 1.4s1.4-0.63 1.4-1.4s-0.63-1.4-1.4-1.4z"
+        d="M18.5 14.5c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.5c-0.83 0-1.5 0.67-1.5 1.5s0.67 1.5 1.5 1.5s1.5-0.67 1.5-1.5s-0.67-1.5-1.5-1.5z"
       />
     </svg>
   );
@@ -322,10 +324,10 @@ export default function App() {
           </div>
 
           {/* LIVLINK Top Bar */}
-          <div className="bg-[#0B1220] text-white px-4 py-2.5 border-b border-slate-800">
+          <div className="bg-[#0B1220] text-white px-4 py-3 border-b border-slate-800">
             {/* Top row: Brand & Reorganized Top Icons */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white text-base shadow-md transition-colors"
                   style={{ backgroundColor: activeColor }}
@@ -334,7 +336,7 @@ export default function App() {
                 </div>
                 <div>
                   <h1 className="text-base font-black tracking-wide text-white leading-tight">LIVLINK</h1>
-                  <p className="text-xs text-slate-300 font-medium">منصة ربط المحلات بالليفرورات</p>
+                  <p className="text-[12.5px] text-slate-200 font-medium">منصة ربط المحلات بالليفرورات</p>
                 </div>
               </div>
 
@@ -377,17 +379,17 @@ export default function App() {
               </div>
             </div>
 
-            {/* Corrected Official Banner: Exact phrase, no repeated tag */}
-            <div className="mt-2 bg-[#172554]/90 rounded-lg px-2.5 py-1.5 flex items-center gap-2 text-xs text-slate-200 border border-blue-900/40">
+            {/* Corrected Official Banner: Balanced spacing and high-contrast text */}
+            <div className="mt-2.5 bg-[#172554]/90 rounded-lg px-3 py-2 flex items-center gap-2 text-[12.5px] text-slate-100 border border-blue-900/40">
               <ShieldCheck className="w-4 h-4 shrink-0" style={{ color: activeColor }} />
               <span className="font-medium">منصة وطنية مغربية مجانية 100% تغطى جميع مدن المملكة</span>
             </div>
 
             {/* Role Indicator & City Selector Row */}
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
               <button
                 onClick={() => handleRoleChange(isDriver ? 'صاحب محل' : 'ليفرور')}
-                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border ${
+                className={`py-2 px-2.5 rounded-lg text-[12.5px] font-bold transition flex items-center justify-center gap-1.5 border ${
                   isDriver
                     ? 'bg-orange-950/60 border-orange-600/50 text-orange-300'
                     : 'bg-blue-950/60 border-blue-800 text-blue-300'
@@ -402,7 +404,7 @@ export default function App() {
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full bg-[#172554] text-white text-xs font-medium rounded-lg px-2 py-1.5 pr-2 appearance-none border border-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full bg-[#172554] text-white text-[12.5px] font-medium rounded-lg px-2.5 py-2 pr-2 appearance-none border border-slate-700 focus:outline-none cursor-pointer"
                 >
                   {MOROCCAN_CITIES.map((c) => (
                     <option key={c} value={c} className="bg-slate-900 text-white">
@@ -410,7 +412,7 @@ export default function App() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2.5 pointer-events-none" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-3 pointer-events-none" />
               </div>
             </div>
           </div>
