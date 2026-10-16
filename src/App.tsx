@@ -3,15 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Store,
   Bike,
-  Truck,
   Phone,
   MessageCircle,
   MapPin,
-  Map as MapIcon,
   Plus,
   Users,
   CheckCircle,
@@ -27,6 +25,8 @@ import {
   X,
   ListFilter,
   Check,
+  User,
+  ArrowRightLeft,
   Navigation
 } from 'lucide-react';
 
@@ -50,6 +50,7 @@ interface DriverProfile {
   phone: string;
   isAvailable: boolean;
   experience: string;
+  completedTrips: number;
 }
 
 const MOROCCAN_CITIES = [
@@ -77,20 +78,48 @@ const MOROCCAN_CITIES = [
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [currentTab, setCurrentTab] = useState<number>(0); // 0: Home, 1: Offers, 2: Map, 3: Add, 4: Drivers
+  // Bottom navigation tabs (strictly in order): 0: الرئيسية, 1: العروض, 2: إضافة, 3: الليفرورات, 4: حسابي
+  const [currentTab, setCurrentTab] = useState<number>(0);
   const [selectedRole, setSelectedRole] = useState<'صاحب محل' | 'ليفرور'>('صاحب محل');
   const [selectedCity, setSelectedCity] = useState<string>('جميع مدن المغرب');
   const [isPhoneFrame, setIsPhoneFrame] = useState(true);
   const [showCodeInspector, setShowCodeInspector] = useState(false);
-  const [selectedInspectorFile, setSelectedInspectorFile] = useState<'NativeHomeScreenNew' | 'AddScreen' | 'buildGradle' | 'workflow'>('NativeHomeScreenNew');
+  const [selectedInspectorFile, setSelectedInspectorFile] = useState<'NativeHomeScreenNew' | 'AddScreen' | 'Theme' | 'MainActivity'>('NativeHomeScreenNew');
+
+  const [isDriverAvailable, setIsDriverAvailable] = useState(true);
+
+  // Load saved role from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('livlink_selected_role');
+    if (saved === 'ليفرور' || saved === 'صاحب محل') {
+      setSelectedRole(saved);
+    }
+  }, []);
+
+  const handleRoleChange = (role: 'صاحب محل' | 'ليفرور') => {
+    setSelectedRole(role);
+    localStorage.setItem('livlink_selected_role', role);
+  };
+
+  const isDriver = selectedRole === 'ليفرور';
+  // Centralized Mode Theme Colors: Blue for Shop Owner, Orange for Delivery Driver
+  const activeColor = isDriver ? '#EA580C' : '#2563EB';
+  const activeBgLight = isDriver ? 'bg-orange-50' : 'bg-blue-50';
+  const activeBorder = isDriver ? 'border-orange-200' : 'border-blue-200';
+  const activeText = isDriver ? 'text-orange-600' : 'text-blue-600';
 
   // Add Screen Form State
-  const [addType, setAddType] = useState<'طلب توصيل' | 'عرض توصيل'>('طلب توصيل');
+  const [addType, setAddType] = useState<'طلب توصيل' | 'عرض توصيل'>(isDriver ? 'عرض توصيل' : 'طلب توصيل');
   const [addTitle, setAddTitle] = useState('');
   const [addCity, setAddCity] = useState('الدار البيضاء');
   const [addPhone, setAddPhone] = useState('');
   const [addDetails, setAddDetails] = useState('');
   const [addSuccessMessage, setAddSuccessMessage] = useState(false);
+
+  // Sync addType with role changes
+  useEffect(() => {
+    setAddType(isDriver ? 'عرض توصيل' : 'طلب توصيل');
+  }, [isDriver]);
 
   // Offers Data
   const [offers, setOffers] = useState<DeliveryOffer[]>([
@@ -101,19 +130,19 @@ export default function App() {
       district: 'المعاريف / سيدي معروف',
       roleType: 'طلب توصيل',
       phone: '0661001122',
-      timeAgo: 'منذ 15 دقيقة',
+      timeAgo: 'منذ 10 دقائق',
       details: 'مطلوب ليفرور لتوصيل طلبيات يومية ثابتة ومضمونة من 10 صباحاً إلى 7 مساءً.'
     },
     {
       id: '2',
-      title: 'ليفرور بموتور خاص (متاح للتوصيل السريع)',
+      title: 'ليفرور بموتور خاص (توصيل سريع مع صندوق)',
       city: 'الرباط',
       district: 'أكدال / حسان / السويسي',
       roleType: 'عرض توصيل',
       phone: '0670334455',
-      timeAgo: 'منذ 30 دقيقة',
+      timeAgo: 'منذ 25 دقيقة',
       details: 'سائق دراجة نارية سريع وموثوق متاح لتغطية طلبات المطاعم والمحلات بمدينة الرباط وسلا ونواحيها.',
-      vehicleType: 'دراجة نارية'
+      vehicleType: 'دراجة نارية مع صندوق'
     },
     {
       id: '3',
@@ -122,7 +151,7 @@ export default function App() {
       district: 'فاس الجديد / النرجس',
       roleType: 'طلب توصيل',
       phone: '0652889900',
-      timeAgo: 'منذ ساعة',
+      timeAgo: 'منذ 45 دقيقة',
       details: 'نبحث عن سائقين لخدمة توصيل وجبات الغداء والعشاء بانتظام.'
     },
     {
@@ -159,15 +188,14 @@ export default function App() {
   ]);
 
   // Drivers Data
-  const drivers: DriverProfile[] = [
-    { id: 'd1', name: 'يوسف العمراني', city: 'الدار البيضاء', vehicle: 'دراجة نارية', phone: '0661122334', isAvailable: true, experience: '3 سنوات' },
-    { id: 'd2', name: 'كريم السبتي', city: 'الرباط', vehicle: 'دراجة نارية', phone: '0672233445', isAvailable: true, experience: 'سنتان' },
-    { id: 'd3', name: 'حمزة التازي', city: 'فاس', vehicle: 'دراجة نارية', phone: '0653344556', isAvailable: true, experience: '4 سنوات' },
-    { id: 'd4', name: 'أنس البورقادي', city: 'طنجة', vehicle: 'سيارة خفيفة', phone: '0664455667', isAvailable: false, experience: '5 سنوات' },
-    { id: 'd5', name: 'رشيد المرابط', city: 'مراكش', vehicle: 'دراجة نارية', phone: '0675566778', isAvailable: true, experience: 'سنة واحدة' },
-    { id: 'd6', name: 'طارق بنعلي', city: 'أكادير', vehicle: 'دراجة نارية', phone: '0656677889', isAvailable: true, experience: 'سنتان' },
-    { id: 'd7', name: 'عمر القادري', city: 'وجدة', vehicle: 'دراجة نارية', phone: '0667889900', isAvailable: true, experience: '3 سنوات' }
-  ];
+  const [drivers, setDrivers] = useState<DriverProfile[]>([
+    { id: 'd1', name: 'يوسف العمراني', city: 'الدار البيضاء', vehicle: 'دراجة نارية مع صندوق', phone: '0661122334', isAvailable: true, experience: '3 سنوات', completedTrips: 420 },
+    { id: 'd2', name: 'كريم السبتي', city: 'الرباط', vehicle: 'دراجة نارية مع صندوق', phone: '0672233445', isAvailable: true, experience: 'سنتان', completedTrips: 280 },
+    { id: 'd3', name: 'حمزة التازي', city: 'فاس', vehicle: 'دراجة نارية', phone: '0653344556', isAvailable: true, experience: '4 سنوات', completedTrips: 510 },
+    { id: 'd4', name: 'أنس البورقادي', city: 'طنجة', vehicle: 'سيارة خفيفة', phone: '0664455667', isAvailable: false, experience: '5 سنوات', completedTrips: 630 },
+    { id: 'd5', name: 'رشيد المرابط', city: 'مراكش', vehicle: 'دراجة نارية مع صندوق', phone: '0675566778', isAvailable: true, experience: 'سنة واحدة', completedTrips: 150 },
+    { id: 'd6', name: 'طارق بنعلي', city: 'أكادير', vehicle: 'دراجة نارية', phone: '0656677889', isAvailable: true, experience: 'سنتان', completedTrips: 310 }
+  ]);
 
   // Filtered lists
   const filteredOffers = offers.filter(
@@ -201,39 +229,38 @@ export default function App() {
       setAddPhone('');
       setAddDetails('');
       setCurrentTab(1); // Jump to offers tab
-    }, 1500);
+    }, 1400);
   };
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'} font-sans flex flex-col`}>
       {/* Top AI Studio Header Bar */}
-      <header className="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between text-white text-xs select-none shadow-sm">
+      <header className="bg-slate-900 border-b border-slate-800 px-4 py-2 flex items-center justify-between text-white text-xs select-none shadow-sm">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="font-bold tracking-wide text-sm bg-gradient-to-r from-red-500 to-rose-400 bg-clip-text text-transparent">
+          <span className="font-bold tracking-wide text-sm bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
             LIVLINK MA
           </span>
-          <span className="text-slate-400 hidden sm:inline">| منصة ربط المحلات بالليفرورات (تغطية وطنية مغربية 100٪ مجانية)</span>
+          <span className="text-slate-400 hidden sm:inline">| المرحلة الأولى — إصلاح المساحة والتنقل والأوضاع</span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Switch Phone Frame Mode */}
           <button
             onClick={() => setIsPhoneFrame(!isPhoneFrame)}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
-            title="تبديل وضع الهاتف / الشاشة الكاملة"
           >
             {isPhoneFrame ? <Maximize2 className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
             <span className="hidden md:inline">{isPhoneFrame ? 'ملء الشاشة' : 'إطار الهاتف'}</span>
           </button>
 
-          {/* Code Inspector button */}
           <button
             onClick={() => setShowCodeInspector(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-600 hover:bg-red-700 text-white font-medium transition"
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-white font-medium transition ${
+              isDriver ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
             <FileCode className="w-3.5 h-3.5" />
-            <span>ملفات Android المُصلحة</span>
+            <span>أكواد Kotlin المُصلحة</span>
           </button>
         </div>
       </header>
@@ -243,14 +270,14 @@ export default function App() {
         <div
           className={`w-full transition-all duration-300 ${
             isPhoneFrame
-              ? 'max-w-[420px] rounded-[38px] shadow-2xl border-[10px] border-slate-900 overflow-hidden ring-1 ring-slate-800'
+              ? 'max-w-[420px] rounded-[40px] shadow-2xl border-[10px] border-slate-900 overflow-hidden ring-1 ring-slate-800'
               : 'max-w-4xl rounded-2xl shadow-xl border border-slate-300 dark:border-slate-800 overflow-hidden'
           } ${isDarkMode ? 'bg-slate-900' : 'bg-white'} flex flex-col h-[780px] max-h-[92vh]`}
         >
-          {/* Mobile Status Bar Simulation */}
-          <div className="bg-slate-900 text-white px-5 pt-2 pb-1 flex justify-between items-center text-[11px] font-medium tracking-tight">
-            <span>12:30</span>
-            <div className="w-20 h-4 bg-slate-950 rounded-full mx-auto -mt-1 hidden sm:block"></div>
+          {/* System Status Bar (Safe Area / Inset respected) */}
+          <div className="bg-slate-950 text-white px-6 pt-2.5 pb-1 flex justify-between items-center text-[11px] font-medium tracking-tight select-none border-b border-slate-900">
+            <span>12:45</span>
+            <div className="w-20 h-4 bg-slate-900 rounded-full mx-auto -mt-1 hidden sm:block"></div>
             <div className="flex items-center gap-1.5">
               <span>5G</span>
               <span>100%</span>
@@ -258,63 +285,87 @@ export default function App() {
           </div>
 
           {/* LIVLINK Top Bar */}
-          <div className="bg-slate-900 text-white px-4 py-3 border-b border-slate-800">
-            {/* Top row: Brand & Dark Toggle */}
+          <div className="bg-slate-900 text-white px-4 py-2.5 border-b border-slate-800">
+            {/* Top row: Brand & Reorganized Top Icons */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-red-600 flex items-center justify-center font-black text-white text-base shadow-md">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center font-black text-white text-base shadow-md transition-colors"
+                  style={{ backgroundColor: activeColor }}
+                >
                   LV
                 </div>
                 <div>
                   <h1 className="text-base font-black tracking-wide text-white leading-tight">LIVLINK</h1>
-                  <p className="text-[11px] text-slate-300 font-medium">منصة ربط المحلات بالليفرورات</p>
+                  <p className="text-[10.5px] text-slate-300 font-medium">منصة ربط المحلات بالليفرورات</p>
                 </div>
               </div>
 
-              {/* Dark mode button */}
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-200 transition"
-                title="الوضع الليلي / النهاري"
-              >
-                {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-300" />}
-              </button>
-            </div>
-
-            {/* Nationwide definition badge */}
-            <div className="mt-2.5 bg-slate-800/80 rounded-lg px-2.5 py-1.5 flex items-center gap-2 text-[11px] text-slate-200 border border-slate-700/50">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>منصة وطنية مغربية مجانية 100٪ بدون اشتراكات أو عمولات</span>
-            </div>
-
-            {/* Roles & City Selector Row */}
-            <div className="mt-2.5 grid grid-cols-2 gap-2">
-              {/* Role Toggle */}
-              <div className="bg-slate-800 p-0.5 rounded-lg flex text-xs">
+              {/* Reorganized Top Icons: 1. Store Icon, 2. Delivery Bike with Box, 3. Dark/Light Mode */}
+              <div className="flex items-center gap-2">
+                {/* 1. Store Icon (Switches to Shop Owner mode) */}
                 <button
-                  onClick={() => setSelectedRole('صاحب محل')}
-                  className={`flex-1 py-1 rounded-md font-bold transition text-center ${
-                    selectedRole === 'صاحب محل' ? 'bg-red-600 text-white shadow' : 'text-slate-300 hover:text-white'
+                  onClick={() => handleRoleChange('صاحب محل')}
+                  title="وضع صاحب المحل"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition border ${
+                    !isDriver
+                      ? 'bg-blue-600 text-white border-blue-400 shadow-md ring-2 ring-blue-500/30'
+                      : 'bg-slate-800 text-slate-400 border-transparent hover:text-white'
                   }`}
                 >
-                  صاحب محل
+                  <Store className="w-4 h-4" />
                 </button>
+
+                {/* 2. Delivery Bike with Box (Switches to Driver mode) */}
                 <button
-                  onClick={() => setSelectedRole('ليفرور')}
-                  className={`flex-1 py-1 rounded-md font-bold transition text-center ${
-                    selectedRole === 'ليفرور' ? 'bg-red-600 text-white shadow' : 'text-slate-300 hover:text-white'
+                  onClick={() => handleRoleChange('ليفرور')}
+                  title="وضع سائق التوصيل (ليفرور)"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition border ${
+                    isDriver
+                      ? 'bg-orange-600 text-white border-orange-400 shadow-md ring-2 ring-orange-500/30'
+                      : 'bg-slate-800 text-slate-400 border-transparent hover:text-white'
                   }`}
                 >
-                  ليفرور
+                  <Bike className="w-4 h-4" />
+                </button>
+
+                {/* 3. Dark Mode Toggle */}
+                <button
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  title="تبديل الوضع الليلي / النهاري"
+                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition"
+                >
+                  {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Corrected Official Banner: Exact phrase, no repeated tag */}
+            <div className="mt-2 bg-slate-800/90 rounded-lg px-2.5 py-1.5 flex items-center gap-2 text-[11px] text-slate-200 border border-slate-700/50">
+              <ShieldCheck className="w-4 h-4 shrink-0" style={{ color: activeColor }} />
+              <span className="font-medium">منصة وطنية مغربية مجانية 100% تغطى جميع مدن المملكة</span>
+            </div>
+
+            {/* Role Indicator & City Selector Row */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleRoleChange(isDriver ? 'صاحب محل' : 'ليفرور')}
+                className={`py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border ${
+                  isDriver
+                    ? 'bg-orange-950/60 border-orange-600/50 text-orange-300'
+                    : 'bg-blue-950/60 border-blue-600/50 text-blue-300'
+                }`}
+              >
+                {isDriver ? <Bike className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
+                <span>{isDriver ? 'وضع الليفرور (نشط)' : 'وضع صاحب المحل (نشط)'}</span>
+              </button>
 
               {/* City Dropdown */}
               <div className="relative">
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full bg-slate-800 text-white text-xs font-medium rounded-lg px-2 py-1.5 pr-2 appearance-none border border-slate-700 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+                  className="w-full bg-slate-800 text-white text-xs font-medium rounded-lg px-2 py-1.5 pr-2 appearance-none border border-slate-700 focus:outline-none cursor-pointer"
                 >
                   {MOROCCAN_CITIES.map((c) => (
                     <option key={c} value={c} className="bg-slate-900 text-white">
@@ -327,84 +378,119 @@ export default function App() {
             </div>
           </div>
 
-          {/* App Body Content based on Active Tab */}
+          {/* App Body Content */}
           <div className={`flex-1 overflow-y-auto p-3.5 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
             {/* TAB 0: HOME */}
             {currentTab === 0 && (
-              <div className="space-y-3.5">
+              <div className="space-y-3 pb-8">
                 {/* Hero Role Card */}
                 <div
-                  className={`rounded-2xl p-4 text-white shadow-md relative overflow-hidden ${
-                    selectedRole === 'صاحب محل'
-                      ? 'bg-gradient-to-br from-red-600 to-rose-700'
-                      : 'bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700'
+                  className={`rounded-2xl p-4 text-white shadow-md relative overflow-hidden transition-all ${
+                    isDriver
+                      ? 'bg-gradient-to-br from-orange-600 to-amber-700'
+                      : 'bg-gradient-to-br from-blue-600 to-indigo-700'
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <span className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                      {selectedRole === 'صاحب محل' ? 'خدمة أصحاب المحلات' : 'خدمة سائقي التوصيل'}
+                      {isDriver ? 'لوحة تحكم الليفرور' : 'لوحة تحكم صاحب المحل'}
                     </span>
-                    <span className="text-[10px] bg-emerald-500 text-white font-bold px-2 py-0.5 rounded">مجاني 100٪</span>
+                    <span className="text-[10px] bg-slate-900/40 text-white font-bold px-2 py-0.5 rounded border border-white/20">
+                      {selectedCity}
+                    </span>
                   </div>
 
                   <h2 className="text-base font-extrabold mt-2">
-                    {selectedRole === 'صاحب محل' ? 'عندك سلعة ومحتاج ليفرور ثقة؟' : 'عندك دراجة نارية أو سيارة وبغيتي تخدم؟'}
+                    {isDriver ? 'أهلاً بك يا كابتن التوصيل!' : 'مرحباً بك يا صاحب المحل!'}
                   </h2>
 
                   <p className="text-xs mt-1 text-slate-100 leading-relaxed opacity-95">
-                    {selectedRole === 'صاحب محل'
-                      ? `انشر طلبات التوصيل الخاصة بمحلك وتواصل مباشرة مع ليفرورات ${selectedCity} بدون وسيط وبدون اقتطاع أي عمولة.`
-                      : `اعثر على عروض التوصيل للمحلات والمطاعم في ${selectedCity} وتواصل فوراً مع أصحابها عبر الواتساب.`}
+                    {isDriver
+                      ? `استعرض طلبيات المحلات والمطاعم المتاحة بمدينة ${selectedCity} وتواصل فوراً مع أصحابها لبدء التوصيل.`
+                      : `انشر طلبيات التوصيل الخاصة بمحلك وتواصل مباشرة مع ليفرورات ${selectedCity} بدون أي وسيط وبدون اقتطاع أي عمولة.`}
                   </p>
 
                   <div className="mt-3.5 flex gap-2">
                     <button
-                      onClick={() => setCurrentTab(3)}
-                      className={`flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow transition ${
-                        selectedRole === 'صاحب محل' ? 'bg-slate-900 hover:bg-slate-800 text-white' : 'bg-red-600 hover:bg-red-700 text-white'
-                      }`}
+                      onClick={() => setCurrentTab(2)}
+                      className="flex-1 py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow transition bg-slate-950 hover:bg-slate-900 text-white"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>{selectedRole === 'صاحب محل' ? 'نشر طلب توصيل جديد' : 'نشر عرض خدمة توصيل'}</span>
+                      <span>{isDriver ? 'نشر عرض جاهزية للتوصيل' : 'إضافة طلب توصيل جديد لمحلك'}</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Quick Service Cards */}
+                {/* Driver Availability Toggle (Driver Mode Only) */}
+                {isDriver && (
+                  <div className="p-3 rounded-xl border border-orange-200 dark:border-orange-950/60 bg-orange-50 dark:bg-orange-950/20 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2.5 h-2.5 rounded-full ${isDriverAvailable ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                          {isDriverAvailable ? 'حالتك: متاح حالياً للتوصيل' : 'حالتك: غير متاح حالياً'}
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          {isDriverAvailable ? 'المحلات في مدينتك يمكنها الاتصال بك الآن' : 'تم إيقاف ظهور إعلانك مؤقتاً'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsDriverAvailable(!isDriverAvailable)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold text-white transition ${
+                        isDriverAvailable ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-600 hover:bg-slate-700'
+                      }`}
+                    >
+                      {isDriverAvailable ? 'نشط' : 'متوقف'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Quick Access Services */}
                 <div>
                   <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">الخدمات والوصول السريع:</h3>
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => setCurrentTab(1)}
-                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-red-400 transition shadow-xs flex flex-col items-center"
+                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
                     >
-                      <div className="w-9 h-9 rounded-full bg-red-50 dark:bg-red-950/50 text-red-600 flex items-center justify-center mb-1.5">
-                        <Store className="w-4 h-4" />
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center mb-1.5"
+                        style={{ backgroundColor: `${activeColor}15`, color: activeColor }}
+                      >
+                        <ListFilter className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">سوق العروض</span>
-                      <span className="text-[10px] text-slate-500">{filteredOffers.length} إعلان نشط</span>
-                    </button>
-
-                    <button
-                      onClick={() => setCurrentTab(4)}
-                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-emerald-400 transition shadow-xs flex flex-col items-center"
-                    >
-                      <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center mb-1.5">
-                        <Bike className="w-4 h-4" />
-                      </div>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">دليل السائقين</span>
-                      <span className="text-[10px] text-slate-500">ليفرورات متاحون</span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                        {isDriver ? 'طلبيات المحلات' : 'سوق العروض'}
+                      </span>
+                      <span className="text-[10px] text-slate-500">{filteredOffers.length} إعلان</span>
                     </button>
 
                     <button
                       onClick={() => setCurrentTab(2)}
-                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-blue-400 transition shadow-xs flex flex-col items-center"
+                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
                     >
-                      <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 flex items-center justify-center mb-1.5">
-                        <MapIcon className="w-4 h-4" />
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center mb-1.5"
+                        style={{ backgroundColor: `${activeColor}15`, color: activeColor }}
+                      >
+                        <Plus className="w-4 h-4" />
                       </div>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">خريطة المغرب</span>
-                      <span className="text-[10px] text-slate-500">تغطية وطنية</span>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                        {isDriver ? 'نشر جاهزية' : 'طلب ليفرور'}
+                      </span>
+                      <span className="text-[10px] text-slate-500">نشر مجاني</span>
+                    </button>
+
+                    <button
+                      onClick={() => setCurrentTab(3)}
+                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center mb-1.5">
+                        <Bike className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">الليفرورات</span>
+                      <span className="text-[10px] text-slate-500">سائقون معتمدون</span>
                     </button>
                   </div>
                 </div>
@@ -413,111 +499,15 @@ export default function App() {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                      أحدث الإعلانات في ({selectedCity}):
+                      {isDriver ? `أحدث طلبات التوصيل المطلوبة في (${selectedCity}):` : `أحدث الإعلانات في (${selectedCity}):`}
                     </h3>
-                    <button
-                      onClick={() => setCurrentTab(1)}
-                      className="text-xs font-bold text-red-600 hover:text-red-700"
-                    >
+                    <button onClick={() => setCurrentTab(1)} className="text-xs font-bold hover:underline" style={{ color: activeColor }}>
                       عرض الكل
                     </button>
                   </div>
 
-                  {filteredOffers.length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
-                      <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">لا توجد إعلانات حالياً في {selectedCity}</p>
-                      <button
-                        onClick={() => setCurrentTab(3)}
-                        className="mt-3 text-xs bg-red-600 text-white font-bold px-3 py-1.5 rounded-lg"
-                      >
-                        كن أول من ينشر إعلاناً
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2.5">
-                      {filteredOffers.slice(0, 3).map((offer) => (
-                        <div
-                          key={offer.id}
-                          className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
-                        >
-                          <div className="flex justify-between items-start gap-2">
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                                offer.roleType === 'طلب توصيل'
-                                  ? 'bg-red-50 dark:bg-red-950 text-red-600 border border-red-200 dark:border-red-800'
-                                  : 'bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800'
-                              }`}
-                            >
-                              {offer.roleType}
-                            </span>
-                            <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {offer.timeAgo}
-                            </span>
-                          </div>
-
-                          <h4 className="text-xs font-bold text-slate-900 dark:text-white mt-1.5">{offer.title}</h4>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-red-500" />
-                            {offer.city} • {offer.district}
-                          </p>
-
-                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg">
-                            {offer.details}
-                          </p>
-
-                          <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-emerald-600" />
-                              {offer.phone}
-                            </span>
-                            <a
-                              href={`https://wa.me/212${offer.phone.replace(/^0/, '')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition"
-                            >
-                              <MessageCircle className="w-3 h-3" />
-                              <span>واتساب</span>
-                            </a>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* TAB 1: OFFERS */}
-            {currentTab === 1 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">سوق طلبات وعروض التوصيل</h2>
-                    <p className="text-[11px] text-slate-500">
-                      المدينة: {selectedCity} ({filteredOffers.length} إعلان)
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setCurrentTab(3)}
-                    className="p-2 rounded-xl bg-red-600 text-white hover:bg-red-700 shadow flex items-center gap-1 text-xs font-bold"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>إضافة</span>
-                  </button>
-                </div>
-
-                {filteredOffers.length === 0 ? (
-                  <div className="bg-white dark:bg-slate-900 p-8 rounded-xl text-center border border-slate-200 dark:border-slate-800">
-                    <AlertCircle className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">لا توجد عروض في {selectedCity}</p>
-                    <p className="text-xs text-slate-500 mt-1">اختر مدينة أخرى من القائمة العلوية أو انشر إعلانك الآن مجاناً.</p>
-                  </div>
-                ) : (
                   <div className="space-y-2.5">
-                    {filteredOffers.map((offer) => (
+                    {filteredOffers.slice(0, 3).map((offer) => (
                       <div
                         key={offer.id}
                         className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
@@ -526,8 +516,8 @@ export default function App() {
                           <span
                             className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                               offer.roleType === 'طلب توصيل'
-                                ? 'bg-red-50 dark:bg-red-950 text-red-600 border border-red-200 dark:border-red-800'
-                                : 'bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800'
+                                ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800'
+                                : 'bg-orange-50 dark:bg-orange-950 text-orange-600 border border-orange-200 dark:border-orange-800'
                             }`}
                           >
                             {offer.roleType}
@@ -553,80 +543,128 @@ export default function App() {
                             <Phone className="w-3 h-3 text-emerald-600" />
                             {offer.phone}
                           </span>
-                          <a
-                            href={`https://wa.me/212${offer.phone.replace(/^0/, '')}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition"
-                          >
-                            <MessageCircle className="w-3 h-3" />
-                            <span>تواصل عبر واتساب</span>
-                          </a>
+                          <div className="flex gap-1.5">
+                            <a
+                              href={`https://wa.me/212${offer.phone.replace(/^0/, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              <span>واتساب</span>
+                            </a>
+                            <a
+                              href={`tel:${offer.phone}`}
+                              className="px-2.5 py-1 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition"
+                            >
+                              <Phone className="w-3 h-3" />
+                              <span>اتصال</span>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
             )}
 
-            {/* TAB 2: MAP */}
-            {currentTab === 2 && (
-              <div className="space-y-3">
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-                  <div className="flex items-center gap-2">
-                    <Navigation className="w-5 h-5 text-red-600" />
-                    <div>
-                      <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">خريطة التغطية الوطنية بالمغرب</h2>
-                      <p className="text-[11px] text-slate-500">LIVLINK تغطي جميع جهات ومدن المملكة المغربية</p>
+            {/* TAB 1: OFFERS */}
+            {currentTab === 1 && (
+              <div className="space-y-3 pb-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                      {isDriver ? 'طلبيات المحلات المتاحة للتوصيل' : 'سوق العروض وطلبات التوصيل'}
+                    </h2>
+                    <p className="text-[11px] text-slate-500">
+                      المدينة: {selectedCity} ({filteredOffers.length} إعلان)
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setCurrentTab(2)}
+                    className="p-2 rounded-xl text-white shadow flex items-center gap-1 text-xs font-bold transition"
+                    style={{ backgroundColor: activeColor }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>إضافة</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2.5">
+                  {filteredOffers.map((offer) => (
+                    <div
+                      key={offer.id}
+                      className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs"
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                            offer.roleType === 'طلب توصيل'
+                              ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 border border-blue-200 dark:border-blue-800'
+                              : 'bg-orange-50 dark:bg-orange-950 text-orange-600 border border-orange-200 dark:border-orange-800'
+                          }`}
+                        >
+                          {offer.roleType}
+                        </span>
+                        <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {offer.timeAgo}
+                        </span>
+                      </div>
+
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white mt-1.5">{offer.title}</h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-red-500" />
+                        {offer.city} • {offer.district}
+                      </p>
+
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg">
+                        {offer.details}
+                      </p>
+
+                      <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-emerald-600" />
+                          {offer.phone}
+                        </span>
+                        <div className="flex gap-1.5">
+                          <a
+                            href={`https://wa.me/212${offer.phone.replace(/^0/, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                            <span>واتساب</span>
+                          </a>
+                          <a
+                            href={`tel:${offer.phone}`}
+                            className="px-2.5 py-1 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs transition"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>اتصال</span>
+                          </a>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Simulated Interactive Morocco Map */}
-                <div className="bg-slate-900 rounded-2xl p-5 text-white border border-slate-800 relative overflow-hidden flex flex-col items-center justify-center min-h-[300px] text-center">
-                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#e53935_1px,transparent_1px)] [background-size:16px_16px]"></div>
-
-                  <div className="w-16 h-16 rounded-full bg-red-600/20 border border-red-500/40 flex items-center justify-center mb-3">
-                    <MapIcon className="w-8 h-8 text-red-500" />
-                  </div>
-
-                  <h3 className="text-base font-black">المملكة المغربية — تغطية وطنية شاملة</h3>
-                  <p className="text-xs text-red-400 font-bold mt-1">المدينة المحددة حالياً: {selectedCity}</p>
-
-                  <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-sm">
-                    {['الدار البيضاء', 'الرباط', 'فاس', 'طنجة', 'مراكش', 'أكادير', 'مكناس', 'وجدة', 'العيون', 'تطوان'].map((city) => (
-                      <span
-                        key={city}
-                        onClick={() => setSelectedCity(city)}
-                        className={`cursor-pointer px-2 py-1 rounded text-[11px] font-bold transition ${
-                          selectedCity === city
-                            ? 'bg-red-600 text-white'
-                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                        }`}
-                      >
-                        {city}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-5 p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 max-w-xs text-[11px] text-slate-400 leading-relaxed">
-                    <span className="font-bold text-slate-200 block mb-0.5">ملاحظة تقنية:</span>
-                    التطبيق مهيأ جغرافياً بربط المحلات بالليفرورات حسب المدن والأحياء. تشغيل خريطة Google Maps التفاعلية الفورية يتطلب تفعيل مفتاح Google Maps Platform في نسخة الإنتاج.
-                  </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* TAB 3: ADD */}
-            {currentTab === 3 && (
-              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            {/* TAB 2: ADD (CENTER TAB) */}
+            {currentTab === 2 && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 pb-8">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                   <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">
                     {addType === 'طلب توصيل' ? 'إضافة طلب توصيل جديد' : 'إضافة عرض ليفرور جديد'}
                   </h2>
-                  <span className="text-[11px] bg-red-100 dark:bg-red-950 text-red-600 px-2 py-0.5 rounded font-bold">
-                    مجاني 100٪
+                  <span
+                    className="text-[11px] px-2 py-0.5 rounded font-bold"
+                    style={{ backgroundColor: `${activeColor}20`, color: activeColor }}
+                  >
+                    {isDriver ? 'وضع الليفرور' : 'وضع المحل'}
                   </span>
                 </div>
 
@@ -634,15 +672,10 @@ export default function App() {
                   <div className="p-6 text-center space-y-2">
                     <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white">تم نشر إعلانك بنجاح في LIVLINK!</h3>
-                    <p className="text-xs text-slate-500">إعلانك ظاهر الآن في مدينة {addCity} لجميع المستخدمين مجاناً.</p>
+                    <p className="text-xs text-slate-500">إعلانك ظاهر الآن في مدينة {addCity} بنجاح.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleAddNewSubmit} className="space-y-3 text-xs">
-                    {/* Free platform reassurance */}
-                    <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-[11px]">
-                      ⚡ منصة LIVLINK وطنية ومجانية 100٪ — بدون أي عمولة أو اشتراك شهري يفرضه التطبيق.
-                    </div>
-
                     {/* Type Selector */}
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5">نوع الإعلان:</label>
@@ -652,18 +685,18 @@ export default function App() {
                           onClick={() => setAddType('طلب توصيل')}
                           className={`py-2 px-3 rounded-lg font-bold border transition text-center ${
                             addType === 'طلب توصيل'
-                              ? 'bg-red-600 text-white border-red-600 shadow'
+                              ? 'bg-blue-600 text-white border-blue-600 shadow'
                               : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                           }`}
                         >
-                          طلب توصيل (محل / تاجر)
+                          طلب توصيل (محل)
                         </button>
                         <button
                           type="button"
                           onClick={() => setAddType('عرض توصيل')}
                           className={`py-2 px-3 rounded-lg font-bold border transition text-center ${
                             addType === 'عرض توصيل'
-                              ? 'bg-slate-900 text-white border-slate-900 shadow'
+                              ? 'bg-orange-600 text-white border-orange-600 shadow'
                               : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                           }`}
                         >
@@ -682,20 +715,20 @@ export default function App() {
                         required
                         value={addTitle}
                         onChange={(e) => setAddTitle(e.target.value)}
-                        placeholder={addType === 'طلب توصيل' ? 'مثال: بيتزيريا النصر - توصيل وجبات' : 'مثال: أمين - دراجة نارية للتوصيل'}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        placeholder={addType === 'طلب توصيل' ? 'مثال: بيتزيريا النصر - وجبات سريعة' : 'مثال: أمين - دراجة نارية للتوصيل السريع'}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white focus:outline-none"
                       />
                     </div>
 
                     {/* City */}
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        المدينة (تغطية كاملة للمغرب) *
+                        المدينة (تغطية وطنية شاملة) *
                       </label>
                       <select
                         value={addCity}
                         onChange={(e) => setAddCity(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white focus:outline-none"
                       >
                         {MOROCCAN_CITIES.filter((c) => c !== 'جميع مدن المغرب').map((city) => (
                           <option key={city} value={city}>
@@ -716,41 +749,42 @@ export default function App() {
                         value={addPhone}
                         onChange={(e) => setAddPhone(e.target.value)}
                         placeholder="06XXXXXXXX"
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-red-500 text-left"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white focus:outline-none text-left"
                       />
                     </div>
 
                     {/* Details */}
                     <div>
                       <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                        تفاصيل إضافية (الحي، التوقيت، طبيعة السلع)
+                        تفاصيل إضافية (الأحياء، التوقيت، شروط التوصيل)
                       </label>
                       <textarea
                         rows={3}
                         value={addDetails}
                         onChange={(e) => setAddDetails(e.target.value)}
                         placeholder="اكتب هنا الحي ومواعيد العمل وشروط التوصيل..."
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-red-500"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-800 dark:text-white focus:outline-none"
                       ></textarea>
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow transition mt-2"
+                      className="w-full py-2.5 rounded-xl text-white font-bold text-xs shadow transition mt-2"
+                      style={{ backgroundColor: activeColor }}
                     >
-                      {addType === 'طلب توصيل' ? 'نشر طلب التوصيل مجاناً' : 'نشر عرض الخدمة مجاناً'}
+                      {addType === 'طلب توصيل' ? 'نشر طلب التوصيل' : 'نشر عرض الخدمة'}
                     </button>
                   </form>
                 )}
               </div>
             )}
 
-            {/* TAB 4: DRIVERS */}
-            {currentTab === 4 && (
-              <div className="space-y-3">
+            {/* TAB 3: DRIVERS (الليفرورات) */}
+            {currentTab === 3 && (
+              <div className="space-y-3 pb-8">
                 <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex justify-between items-center">
                   <div>
-                    <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">دليل السائقين (الليفرورات)</h2>
+                    <h2 className="text-sm font-extrabold text-slate-900 dark:text-white">دليل الليفرورات المعتمدين</h2>
                     <p className="text-[11px] text-slate-500">سائقون محترفون متاحون في {selectedCity}</p>
                   </div>
                   <span className="text-xs bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold px-2 py-0.5 rounded">
@@ -758,108 +792,196 @@ export default function App() {
                   </span>
                 </div>
 
-                {filteredDrivers.length === 0 ? (
-                  <div className="bg-white dark:bg-slate-900 p-8 rounded-xl text-center border border-slate-200 dark:border-slate-800">
-                    <p className="text-xs text-slate-500">لا يوجد سائقون مسجلون حالياً في {selectedCity}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {filteredDrivers.map((driver) => (
-                      <div
-                        key={driver.id}
-                        className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              driver.isAvailable
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                                : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                            }`}
-                          >
-                            <Bike className="w-5 h-5" />
-                          </div>
-
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xs font-bold text-slate-900 dark:text-white">{driver.name}</h4>
-                              <span
-                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
-                                  driver.isAvailable
-                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                }`}
-                              >
-                                {driver.isAvailable ? 'متاح' : 'مشغول'}
-                              </span>
-                            </div>
-
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                              {driver.city} • {driver.vehicle} ({driver.experience})
-                            </p>
-                          </div>
+                <div className="space-y-2.5">
+                  {filteredDrivers.map((driver) => (
+                    <div
+                      key={driver.id}
+                      className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            driver.isAvailable
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                              : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                          }`}
+                        >
+                          <Bike className="w-5 h-5" />
                         </div>
 
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-white">{driver.name}</h4>
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                                driver.isAvailable
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                  : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                              }`}
+                            >
+                              {driver.isAvailable ? 'متاح' : 'مشغول'}
+                            </span>
+                          </div>
+
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            {driver.city} • {driver.vehicle} ({driver.experience})
+                          </p>
+                          <p className="text-[10.5px] font-semibold text-emerald-600">
+                            {driver.completedTrips} توصيلة ناجحة
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-1.5">
+                        <a
+                          href={`https://wa.me/212${driver.phone.replace(/^0/, '')}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-8 h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center transition"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </a>
                         <a
                           href={`tel:${driver.phone}`}
-                          className="px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1 transition"
+                          className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white flex items-center justify-center transition"
                         >
-                          <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>اتصال</span>
+                          <Phone className="w-4 h-4" />
                         </a>
                       </div>
-                    ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: MY ACCOUNT (حسابي) */}
+            {currentTab === 4 && (
+              <div className="space-y-3 pb-8">
+                {/* Profile Header */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm text-center">
+                  <div
+                    className="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-2 border-2"
+                    style={{ backgroundColor: `${activeColor}15`, borderColor: activeColor, color: activeColor }}
+                  >
+                    {isDriver ? <Bike className="w-8 h-8" /> : <Store className="w-8 h-8" />}
                   </div>
-                )}
+
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {isDriver ? 'سائق توصيل معتمد (ليفرور)' : 'محل تجاري معتمد (تاجر)'}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    الوضع النشط: {selectedRole} • {selectedCity}
+                  </p>
+
+                  <div className="mt-3 flex justify-center">
+                    <button
+                      onClick={() => handleRoleChange(isDriver ? 'صاحب محل' : 'ليفرور')}
+                      className="px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition"
+                      style={{ borderColor: activeColor, color: activeColor }}
+                    >
+                      <ArrowRightLeft className="w-3.5 h-3.5" />
+                      <span>{isDriver ? 'التبديل إلى وضع صاحب المحل' : 'التبديل إلى وضع الليفرور'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Account Details */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2.5 text-xs">
+                  <h4 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-1.5">
+                    معلومات الحساب والتطبيق:
+                  </h4>
+
+                  <div className="flex justify-between py-1">
+                    <span className="text-slate-500">نوع الحساب:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{selectedRole}</span>
+                  </div>
+
+                  <div className="flex justify-between py-1 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-500">المدينة المعتمدة:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{selectedCity}</span>
+                  </div>
+
+                  <div className="flex justify-between py-1 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-500">رقم الهاتف الافتراضي:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">0661234567</span>
+                  </div>
+
+                  {isDriver && (
+                    <div className="flex justify-between py-1 border-t border-slate-100 dark:border-slate-800 items-center">
+                      <span className="text-slate-500">جاهزية التوصيل:</span>
+                      <button
+                        onClick={() => setIsDriverAvailable(!isDriverAvailable)}
+                        className={`px-2 py-0.5 rounded text-[11px] font-bold text-white ${
+                          isDriverAvailable ? 'bg-emerald-600' : 'bg-slate-600'
+                        }`}
+                      >
+                        {isDriverAvailable ? 'متاح' : 'متوقف'}
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between py-1 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-500">نموذج الاستخدام:</span>
+                    <span className="font-bold text-emerald-600">مجاني 100٪ بدون عمولات</span>
+                  </div>
+                </div>
+
+                {/* Notice */}
+                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-[11px] text-slate-500 leading-relaxed">
+                  <span className="font-bold text-slate-700 dark:text-slate-300 block mb-0.5">توضيح تقني:</span>
+                  يتم حفظ إعدادات الدور والتفضيلات محلياً في هذا الإصدار عبر SharedPreferences. الربط السحابي مع قاعدة البيانات الخارجية سيتم إدراجه لاحقاً.
+                </div>
               </div>
             )}
           </div>
 
-          {/* Bottom Navigation Bar (5 destinations) */}
-          <div className="bg-slate-900 border-t border-slate-800 px-2 py-1.5 flex justify-around items-center select-none">
+          {/* Bottom Navigation Bar (Strictly 5 items: 1.الرئيسية, 2.العروض, 3.إضافة, 4.الليفرورات, 5.حسابي) */}
+          <div className="bg-slate-900 border-t border-slate-800 px-1 py-1.5 flex justify-around items-center select-none pb-3">
             {[
               { label: 'الرئيسية', icon: Store, index: 0 },
               { label: 'العروض', icon: ListFilter, index: 1 },
-              { label: 'الخريطة', icon: MapIcon, index: 2 },
-              { label: 'إضافة', icon: Plus, index: 3 },
-              { label: 'السائقون', icon: Users, index: 4 }
-            ].map(({ label, icon: IconComponent, index }) => (
-              <button
-                key={label}
-                onClick={() => setCurrentTab(index)}
-                className={`flex flex-col items-center py-1 px-3 rounded-lg transition ${
-                  currentTab === index
-                    ? 'text-red-500 font-bold'
-                    : 'text-slate-400 hover:text-slate-200 font-medium'
-                }`}
-              >
-                <div
-                  className={`p-1 rounded-full ${
-                    index === 3
-                      ? 'bg-red-600 text-white shadow-md -mt-2'
-                      : currentTab === index
-                      ? 'bg-slate-800'
-                      : ''
+              { label: 'إضافة', icon: Plus, index: 2 },
+              { label: 'الليفرورات', icon: Bike, index: 3 },
+              { label: 'حسابي', icon: User, index: 4 }
+            ].map(({ label, icon: IconComponent, index }) => {
+              const isSelected = currentTab === index;
+              return (
+                <button
+                  key={label}
+                  onClick={() => setCurrentTab(index)}
+                  className={`flex flex-col items-center py-1 px-2.5 rounded-lg transition ${
+                    isSelected ? 'font-bold' : 'text-slate-400 hover:text-slate-200 font-medium'
                   }`}
+                  style={{ color: isSelected ? activeColor : undefined }}
                 >
-                  <IconComponent className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] mt-0.5">{label}</span>
-              </button>
-            ))}
+                  <div
+                    className={`p-1 rounded-full transition-all ${
+                      index === 2
+                        ? 'text-white shadow-md -mt-2.5'
+                        : isSelected
+                        ? 'bg-slate-800'
+                        : ''
+                    }`}
+                    style={{ backgroundColor: index === 2 ? activeColor : undefined }}
+                  >
+                    <IconComponent className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] mt-0.5">{label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </main>
 
-      {/* Code Inspector Modal (viewing fixed Kotlin / Compose & Gradle files) */}
+      {/* Code Inspector Modal */}
       {showCodeInspector && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden text-white shadow-2xl">
-            {/* Modal header */}
             <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileCode className="w-5 h-5 text-red-500" />
-                <h3 className="font-bold text-sm">مستعرض ملفات أندرويد المكتملة والمُصلحة (Kotlin & Gradle)</h3>
+                <FileCode className="w-5 h-5 text-blue-500" />
+                <h3 className="font-bold text-sm">مستعرض ملفات Kotlin المعدلة للمرحلة الأولى</h3>
               </div>
               <button
                 onClick={() => setShowCodeInspector(false)}
@@ -869,177 +991,57 @@ export default function App() {
               </button>
             </div>
 
-            {/* File Switcher Tabs */}
             <div className="flex bg-slate-950 px-3 py-2 gap-2 border-b border-slate-800 overflow-x-auto text-xs">
-              <button
-                onClick={() => setSelectedInspectorFile('NativeHomeScreenNew')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  selectedInspectorFile === 'NativeHomeScreenNew' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'
-                }`}
-              >
-                NativeHomeScreenNew.kt
-              </button>
-              <button
-                onClick={() => setSelectedInspectorFile('AddScreen')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  selectedInspectorFile === 'AddScreen' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'
-                }`}
-              >
-                AddScreen.kt
-              </button>
-              <button
-                onClick={() => setSelectedInspectorFile('buildGradle')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  selectedInspectorFile === 'buildGradle' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'
-                }`}
-              >
-                app/build.gradle.kts
-              </button>
-              <button
-                onClick={() => setSelectedInspectorFile('workflow')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                  selectedInspectorFile === 'workflow' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'
-                }`}
-              >
-                .github/workflows/main.yml
-              </button>
+              {(['NativeHomeScreenNew', 'AddScreen', 'Theme', 'MainActivity'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setSelectedInspectorFile(tab)}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
+                    selectedInspectorFile === tab ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'
+                  }`}
+                >
+                  {tab}.kt
+                </button>
+              ))}
             </div>
 
-            {/* Code view */}
             <div className="flex-1 p-4 overflow-auto font-mono text-xs bg-slate-950 text-slate-200 select-all leading-relaxed" dir="ltr">
               {selectedInspectorFile === 'NativeHomeScreenNew' && (
                 <pre>
 {`// app/src/main/java/com/example/NativeHomeScreenNew.kt
-// تم إصلاح: CardElevation في Material 3 عبر CardDefaults.cardElevation(...)
-// تم إصلاح: مراجع الألوان color -> tint في Icon و containerColor في Cards/Buttons
-// تم إصلاح: توافق المعاملات مع AddScreen والـ 5 وجهات للتنقل السفلي
-
-package com.example
-
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-@Composable
-fun NativeHomeScreenNew(
-    isDarkMode: Boolean = false,
-    onToggleDarkMode: () -> Unit = {}
-) {
-    // 5 Destinations: 0: الرئيسية, 1: العروض, 2: الخريطة, 3: إضافة, 4: السائقون
-    var currentTab by remember { mutableIntStateOf(0) }
-    var selectedRole by remember { mutableStateOf("صاحب محل") }
-    var selectedCity by remember { mutableStateOf("جميع مدن المغرب") }
-    // ... تم كتابة الكود كاملاً في ملف المشروع
-}`}
+// 1. المساحة العلوية: statusBarsPadding() لمنع التداخل مع شريط حالة Android.
+// 2. المساحة السفلية: navigationBarsPadding() و contentPadding كافية لمنع اختفاء آخر عنصر.
+// 3. الأيقونات العلوية: أيقونة المحل وأيقونة الدراجة النارية بصندوق التوصيل والوضع الليلي.
+// 4. الشريط السفلي (5 عناصر مرتبة): الرئيسية، العروض، إضافة، الليفرورات، حسابي.
+// 5. الوضمان المستقلان: الأزرق لصاحب المحل والبرتقالي لليفرور.`}
                 </pre>
               )}
-
               {selectedInspectorFile === 'AddScreen' && (
                 <pre>
 {`// app/src/main/java/com/example/AddScreen.kt
-// تم إصلاح: توافق معاملات الدالة Composable بدون تعارض
-// تم توحيد الهوية: LIVLINK منصة وطنية مجانية 100% بدون عمولات
-
-package com.example
-
-import androidx.compose.runtime.*
-import androidx.compose.material3.*
-
-@Composable
-fun AddScreen(
-    onDismiss: () -> Unit = {},
-    initialType: String = "طلب توصيل",
-    onAddSubmit: ((title: String, city: String, phone: String, details: String, type: String) -> Unit)? = null
-) {
-    // يدعم إضافة طلب توصيل (للمحلات) أو عرض توصيل (للسائقين)
-    // مع اختيار المدينة ورقم الهاتف والتحقق من الحقول
-}`}
+// يتكيف تلقائياً مع دور المستخدم (طلب توصيل للمحل vs عرض توصيل لليفرور)
+// يحترم المساحة العلوية والسفلية (statusBarsPadding / navigationBarsPadding)`}
                 </pre>
               )}
-
-              {selectedInspectorFile === 'buildGradle' && (
+              {selectedInspectorFile === 'Theme' && (
                 <pre>
-{`// app/build.gradle.kts
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.compose.compiler)
-}
-
-android {
-    namespace = "com.example"
-    compileSdk = 35
-
-    defaultConfig {
-        applicationId = "com.example"
-        minSdk = 24
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
-    }
-
-    signingConfigs {
-        create("release") {
-            // مؤمن عبر متغيرات البيئة لبناء GitHub Actions
-            val keystoreFile = System.getenv("KEYSTORE_FILE")
-            if (keystoreFile != null && file(keystoreFile).exists()) {
-                storeFile = file(keystoreFile)
-                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-                keyAlias = System.getenv("KEY_ALIAS") ?: ""
-                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
-            }
-        }
-    }
-}`}
+{`// app/src/main/java/com/example/ui/theme/Theme.kt
+// نظام ألوان مركزي: Blue (ShopBluePrimary #2563EB) و Orange (DriverOrangePrimary #EA580C)
+// تحديث ألوان شريط الحالة تلقائياً دون إعادة تشغيل التطبيق.`}
                 </pre>
               )}
-
-              {selectedInspectorFile === 'workflow' && (
+              {selectedInspectorFile === 'MainActivity' && (
                 <pre>
-{`# .github/workflows/main.yml
-name: Build LIVLINK Android APK
-
-on: [push, pull_request, workflow_dispatch]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
-      - run: ./gradlew assembleDebug --stacktrace
-      - run: ./gradlew assembleRelease --stacktrace
-      - uses: actions/upload-artifact@v4
-        with:
-          name: livlink-apks
-          path: app/build/outputs/apk/**/*.apk`}
+{`// app/src/main/java/com/example/MainActivity.kt
+// استخدام enableEdgeToEdge()
+// حفظ واسترجاع اختيار الدور في SharedPreferences`}
                 </pre>
               )}
             </div>
 
-            {/* Footer with CI/CD info */}
             <div className="p-3 bg-slate-900 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-              <span>جميع الملفات محفوظة في مسارات المشروع الفعلية وجاهزة للبناء التلقائي عبر GitHub Actions</span>
-              <button
-                onClick={() => setShowCodeInspector(false)}
-                className="px-3 py-1 bg-red-600 text-white rounded-lg font-bold"
-              >
+              <span>جميع التعديلات مطبقة في مسارات Android الأصلية وجاهزة للبناء</span>
+              <button onClick={() => setShowCodeInspector(false)} className="px-3 py-1 bg-blue-600 text-white rounded-lg font-bold">
                 إغلاق
               </button>
             </div>

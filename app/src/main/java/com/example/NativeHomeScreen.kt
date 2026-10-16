@@ -9,10 +9,14 @@ import androidx.compose.runtime.Composable
 @Composable
 fun NativeHomeScreen(
     isDarkMode: Boolean = false,
-    onToggleDarkMode: () -> Unit = {}
+    onToggleDarkMode: () -> Unit = {},
+    currentRole: String = "صاحب محل",
+    onRoleChange: (String) -> Unit = {}
 ) {
     NativeHomeScreenNew(
         isDarkMode = isDarkMode,
-        onToggleDarkMode = onToggleDarkMode
+        onToggleDarkMode = onToggleDarkMode,
+        currentRole = currentRole,
+        onRoleChange = onRoleChange
     )
 }
