@@ -35,11 +35,12 @@ android {
                 }
                 if (candidateFile != null) {
                     storeFile = candidateFile
-                    storePassword = project.findProperty("KEYSTORE_PASSWORD") as? String
+                    storePassword = (project.findProperty("KEYSTORE_PASSWORD") as? String)?.takeIf { it.isNotBlank() }
                         ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
-                    keyAlias = project.findProperty("KEY_ALIAS") as? String
-                        ?: System.getenv("KEY_ALIAS") ?: ""
-                    keyPassword = project.findProperty("KEY_PASSWORD") as? String
+                    keyAlias = (project.findProperty("KEY_ALIAS") as? String)?.takeIf { it.isNotBlank() }
+                        ?: System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
+                        ?: "upload"
+                    keyPassword = (project.findProperty("KEY_PASSWORD") as? String)?.takeIf { it.isNotBlank() }
                         ?: System.getenv("KEY_PASSWORD") ?: ""
                 }
             }
@@ -120,7 +121,7 @@ gradle.taskGraph.whenReady {
                 |لإصدار نسخة Release صالحة وموقعة رسمياً، يجب توفير الأسرار والمتغيرات التالية:
                 |  - KEYSTORE_BASE64: كود Base64 لملف الـ Keystore (أو تعيين مسار KEYSTORE_FILE).
                 |  - KEYSTORE_PASSWORD: كلمة مرور ملف المفاتيح.
-                |  - KEY_ALIAS: الاسم التعريفي للمفتاح داخل الـ Keystore.
+                |  - KEY_ALIAS: الاسم التعريفي للمفتاح داخل الـ Keystore (الافتراضي: upload).
                 |  - KEY_PASSWORD: كلمة مرور المفتاح الخاص.
                 |
                 |تم إيقاف بناء Release عمداً لمنع إنتاج APK غير موقّع أو موقّع بمفتاح Debug تجريبي.

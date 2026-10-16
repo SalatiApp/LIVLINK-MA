@@ -12,6 +12,8 @@ coverage/
 app/build/
 *.apk
 *.aab
+*.keystore
+*.jks
 
 # Ensure Gradle wrapper files are tracked by Git
 !gradle/wrapper/gradle-wrapper.jar
