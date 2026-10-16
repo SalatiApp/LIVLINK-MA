@@ -1034,7 +1034,7 @@ export default function App() {
                   key={tab}
                   onClick={() => setSelectedInspectorFile(tab)}
                   className={`px-3 py-1.5 rounded-lg font-bold transition whitespace-nowrap ${
-                    selectedInspectorFile === tab ? 'bg-[#1E40AF] text-white' : 'bg-slate-800 text-slate-300'
+                    selectedInspectorFile === tab ? 'bg-[#1D4ED8] text-white' : 'bg-slate-800 text-slate-300'
                   }`}
                 >
                   {tab}.kt
@@ -1046,11 +1046,10 @@ export default function App() {
               {selectedInspectorFile === 'NativeHomeScreenNew' && (
                 <pre>
 {`// app/src/main/java/com/example/NativeHomeScreenNew.kt
-// 1. المساحة العلوية: statusBarsPadding() لمنع التداخل مع شريط حالة Android.
-// 2. المساحة السفلية: navigationBarsPadding() و contentPadding كافية لمنع اختفاء آخر عنصر.
-// 3. الأيقونات العلوية: أيقونة المحل وأيقونة الدراجة النارية بصندوق التوصيل والوضع الليلي (مقاس موحد 34dp ومسافات متساوية 6dp).
-// 4. الشريط السفلي (5 عناصر مرتبة): الرئيسية، العروض، إضافة، الليفرورات، حسابي.
-// 5. الوضمان المستقلان: الأزرق الداكن الملكي لصاحب المحل (#1E40AF) والبرتقالي لليفرور (#EA580C).`}
+// 1. الشريط العلوي: أيقونات منفصلة تماماً (المحل، دراجة التوصيل مع الصندوق، الوضع الليلي) بمقاس 32dp ومسافات متساوية 8dp دون تداخل.
+// 2. نظام الألوان: الأزرق الملكي الهادئ (#1D4ED8) لصاحب المحل، وخلفية زرقاء داكنة (#172554)، والبرتقالي (#EA580C) لليفرور.
+// 3. وضوح النصوص: نصوص رمادية فاتحة مقروءة (#CBD5E1) ورفع مقاسات الخطوط لمنع التداخل وصعوبة القراءة.
+// 4. الشريط السفلي: 5 عناصر مرتبة مع احترام RTL وأيقونة دراجة التوصيل ذات صندوق الشحن.`}
                 </pre>
               )}
               {selectedInspectorFile === 'AddScreen' && (
@@ -1063,8 +1062,8 @@ export default function App() {
               {selectedInspectorFile === 'Theme' && (
                 <pre>
 {`// app/src/main/java/com/example/ui/theme/Theme.kt
-// نظام ألوان مركزي: Blue الملكي الداكن (ShopBluePrimary #1E40AF) و Orange (DriverOrangePrimary #EA580C)
-// خلفية مساحة محتوى مريحة للعين في الوضع الداكن (#0A0F1D) مع تباين واضح للبطاقات (#162032) والنصوص.`}
+// نظام ألوان مركزي: الأزرق الملكي الهادئ (ShopBluePrimary #1D4ED8) وخلفية #0B1220 وبطاقات #152238
+// نصوص رمادية فاتحة عالية التباين (TextSecondaryDark #CBD5E1)`}
                 </pre>
               )}
               {selectedInspectorFile === 'MainActivity' && (
@@ -1078,7 +1077,7 @@ export default function App() {
 
             <div className="p-3 bg-slate-900 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
               <span>جميع التعديلات مطبقة في مسارات Android الأصلية وجاهزة للبناء</span>
-              <button onClick={() => setShowCodeInspector(false)} className="px-3 py-1 bg-[#1E40AF] hover:bg-blue-900 text-white rounded-lg font-bold">
+              <button onClick={() => setShowCodeInspector(false)} className="px-3 py-1 bg-[#1D4ED8] hover:bg-blue-800 text-white rounded-lg font-bold">
                 إغلاق
               </button>
             </div>
