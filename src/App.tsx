@@ -44,21 +44,24 @@ export function DeliveryMotorcycleBoxIcon({
       className={className}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Insulated Delivery Box mounted on rear rack behind driver */}
-      <path d="M2 6h5.8c0.45 0 0.8 0.35 0.8 0.8v4.6c0 0.45-0.35 0.8-0.8 0.8H2c-0.45 0-0.8-0.35-0.8-0.8V6.8c0-0.45 0.35-0.8 0.8-0.8z M2.6 8.2h4.6v1.2H2.6z" />
-      {/* Driver Head & Safety Helmet */}
-      <path d="M13.2 2.4c1.16 0 2.1 0.94 2.1 2.1s-0.94 2.1-2.1 2.1s-2.1-0.94-2.1-2.1s0.94-2.1 2.1-2.1z" />
-      {/* Courier Riding Silhouette & Motorcycle Chassis */}
-      <path d="M11.8 7.2l2.7 2.6l3-0.8l-0.3-1.2l-2.4 0.6l-2-1.9z M8 12.2h4.8l2 2.8h-2.2l-1.4-1.8H8z M16.8 8l2.6 8.2h-1.6l-2.2-7.2z M4 12.2l1.5 4.3h1.4l-1.7-4.3z" />
-      {/* Rear Wheel with Hub Cutout */}
+      {/* Insulated Cargo Delivery Box mounted on rear rack behind driver */}
       <path
         fillRule="evenodd"
-        d="M5.5 14.5c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.6c-0.77 0-1.4 0.63-1.4 1.4s0.63 1.4 1.4 1.4s1.4-0.63 1.4-1.4s-0.63-1.4-1.4-1.4z"
+        d="M2 6h5.5c0.55 0 1 0.45 1 1v5c0 0.55-0.45 1-1 1H2c-0.55 0-1-0.45-1-1V7c0-0.55 0.45-1 1-1zm0.8 1.8h3.9v1.4H2.8z"
       />
-      {/* Front Wheel with Hub Cutout */}
+      {/* Driver Head & Protective Helmet */}
+      <path d="M13.5 3c1.1 0 2 0.9 2 2s-0.9 2-2 2s-2-0.9-2-2s0.9-2 2-2z" />
+      {/* Driver Torso, Handlebars & Motorcycle Chassis Frame */}
+      <path d="M11.8 7.2l2.7 2.6l3-0.8l-0.3-1.2l-2.4 0.6l-2-1.9z M9.2 12.2h4l2.2 2.8h-2.2l-1.4-1.8H9.2z M17 8l2.6 8.2h-1.6l-2.2-7.2z M4 12.5l1.6 4.2h1.4l-1.7-4.2z" />
+      {/* Rear Wheel with Cutout Hub */}
       <path
         fillRule="evenodd"
-        d="M18.5 14.5c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.6c-0.77 0-1.4 0.63-1.4 1.4s0.63 1.4 1.4 1.4s1.4-0.63 1.4-1.4s-0.63-1.4-1.4-1.4z"
+        d="M5.5 14c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.6c-0.77 0-1.4 0.63-1.4 1.4s0.63 1.4 1.4 1.4s1.4-0.63 1.4-1.4s-0.63-1.4-1.4-1.4z"
+      />
+      {/* Front Wheel with Cutout Hub */}
+      <path
+        fillRule="evenodd"
+        d="M18.5 14c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 1.6c-0.77 0-1.4 0.63-1.4 1.4s0.63 1.4 1.4 1.4s1.4-0.63 1.4-1.4s-0.63-1.4-1.4-1.4z"
       />
     </svg>
   );
@@ -136,8 +139,8 @@ export default function App() {
   };
 
   const isDriver = selectedRole === 'ليفرور';
-  // Centralized Mode Theme Colors: Darker Blue for Shop Owner, Orange for Delivery Driver
-  const activeColor = isDriver ? '#EA580C' : '#1E40AF';
+  // Centralized Mode Theme Colors: Calmed Royal Blue (#1D4ED8) for Shop Owner, Orange (#EA580C) for Delivery Driver
+  const activeColor = isDriver ? '#EA580C' : '#1D4ED8';
   const activeBgLight = isDriver ? 'bg-orange-50' : 'bg-blue-50';
   const activeBorder = isDriver ? 'border-orange-200' : 'border-blue-200';
   const activeText = isDriver ? 'text-orange-600' : 'text-blue-700';
@@ -319,7 +322,7 @@ export default function App() {
           </div>
 
           {/* LIVLINK Top Bar */}
-          <div className="bg-slate-900 text-white px-4 py-2.5 border-b border-slate-800">
+          <div className="bg-[#0B1220] text-white px-4 py-2.5 border-b border-slate-800">
             {/* Top row: Brand & Reorganized Top Icons */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -331,20 +334,20 @@ export default function App() {
                 </div>
                 <div>
                   <h1 className="text-base font-black tracking-wide text-white leading-tight">LIVLINK</h1>
-                  <p className="text-[10.5px] text-slate-300 font-medium">منصة ربط المحلات بالليفرورات</p>
+                  <p className="text-xs text-slate-300 font-medium">منصة ربط المحلات بالليفرورات</p>
                 </div>
               </div>
 
-              {/* Refined Top Icons: 1. Store Icon, 2. Delivery Motorcycle with Box, 3. Dark/Light Mode */}
-              <div className="flex items-center gap-1.5">
+              {/* Refined Top Icons: Completely separated, uniform 32px (w-8 h-8), equal 8px spacing, no overlaps */}
+              <div className="flex items-center gap-2">
                 {/* 1. Store Icon (Switches to Shop Owner mode) */}
                 <button
                   onClick={() => handleRoleChange('صاحب محل')}
                   title="وضع صاحب المحل"
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition border ${
                     !isDriver
-                      ? 'bg-[#1E40AF] text-white border-blue-400 shadow-sm ring-1 ring-blue-700/40'
-                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                      ? 'bg-[#1D4ED8] text-white border-blue-300 shadow-sm'
+                      : 'bg-[#1E293B] text-slate-300 border-slate-700 hover:text-white'
                   }`}
                 >
                   <Store className="w-4 h-4" />
@@ -356,8 +359,8 @@ export default function App() {
                   title="وضع سائق التوصيل (ليفرور)"
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition border ${
                     isDriver
-                      ? 'bg-orange-600 text-white border-orange-400 shadow-sm ring-1 ring-orange-500/40'
-                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                      ? 'bg-[#EA580C] text-white border-orange-300 shadow-sm'
+                      : 'bg-[#1E293B] text-slate-300 border-slate-700 hover:text-white'
                   }`}
                 >
                   <DeliveryMotorcycleBoxIcon className="w-4 h-4" />
@@ -367,7 +370,7 @@ export default function App() {
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
                   title="تبديل الوضع الليلي / النهاري"
-                  className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 transition"
+                  className="w-8 h-8 rounded-full bg-[#1E293B] hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 transition"
                 >
                   {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
                 </button>
@@ -375,7 +378,7 @@ export default function App() {
             </div>
 
             {/* Corrected Official Banner: Exact phrase, no repeated tag */}
-            <div className="mt-2 bg-slate-800/90 rounded-lg px-2.5 py-1.5 flex items-center gap-2 text-[11px] text-slate-200 border border-slate-700/50">
+            <div className="mt-2 bg-[#172554]/90 rounded-lg px-2.5 py-1.5 flex items-center gap-2 text-xs text-slate-200 border border-blue-900/40">
               <ShieldCheck className="w-4 h-4 shrink-0" style={{ color: activeColor }} />
               <span className="font-medium">منصة وطنية مغربية مجانية 100% تغطى جميع مدن المملكة</span>
             </div>
@@ -399,7 +402,7 @@ export default function App() {
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full bg-slate-800 text-white text-xs font-medium rounded-lg px-2 py-1.5 pr-2 appearance-none border border-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full bg-[#172554] text-white text-xs font-medium rounded-lg px-2 py-1.5 pr-2 appearance-none border border-slate-700 focus:outline-none cursor-pointer"
                 >
                   {MOROCCAN_CITIES.map((c) => (
                     <option key={c} value={c} className="bg-slate-900 text-white">
@@ -413,7 +416,7 @@ export default function App() {
           </div>
 
           {/* App Body Content */}
-          <div className={`flex-1 overflow-y-auto p-3.5 ${isDarkMode ? 'bg-[#0A0F1D]' : 'bg-slate-100/90'}`}>
+          <div className={`flex-1 overflow-y-auto p-3.5 ${isDarkMode ? 'bg-[#0B1220]' : 'bg-slate-100/90'}`}>
             {/* TAB 0: HOME */}
             {currentTab === 0 && (
               <div className="space-y-3 pb-8">
@@ -421,15 +424,15 @@ export default function App() {
                 <div
                   className={`rounded-2xl p-4 text-white shadow-md relative overflow-hidden transition-all ${
                     isDriver
-                      ? 'bg-gradient-to-br from-orange-600 to-amber-700'
-                      : 'bg-gradient-to-br from-blue-600 to-indigo-700'
+                      ? 'bg-gradient-to-br from-[#EA580C] to-[#C2410C]'
+                      : 'bg-gradient-to-br from-[#1D4ED8] to-[#172554]'
                   }`}
                 >
                   <div className="flex justify-between items-start">
                     <span className="text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
                       {isDriver ? 'لوحة تحكم الليفرور' : 'لوحة تحكم صاحب المحل'}
                     </span>
-                    <span className="text-[10px] bg-slate-900/40 text-white font-bold px-2 py-0.5 rounded border border-white/20">
+                    <span className="text-xs bg-black/40 text-white font-bold px-2 py-0.5 rounded border border-white/20">
                       {selectedCity}
                     </span>
                   </div>
@@ -464,7 +467,7 @@ export default function App() {
                         <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
                           {isDriverAvailable ? 'حالتك: متاح حالياً للتوصيل' : 'حالتك: غير متاح حالياً'}
                         </p>
-                        <p className="text-[10px] text-slate-500">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-300">
                           {isDriverAvailable ? 'المحلات في مدينتك يمكنها الاتصال بك الآن' : 'تم إيقاف ظهور إعلانك مؤقتاً'}
                         </p>
                       </div>
@@ -482,11 +485,11 @@ export default function App() {
 
                 {/* Quick Access Services */}
                 <div>
-                  <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">الخدمات والوصول السريع:</h3>
+                  <h3 className="text-xs font-bold text-slate-500 dark:text-slate-300 mb-2">الخدمات والوصول السريع:</h3>
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => setCurrentTab(1)}
-                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
+                      className="p-3 rounded-xl bg-white dark:bg-[#152238] border border-slate-200 dark:border-slate-800 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
                     >
                       <div
                         className="w-9 h-9 rounded-full flex items-center justify-center mb-1.5"
@@ -497,12 +500,12 @@ export default function App() {
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
                         {isDriver ? 'طلبيات المحلات' : 'سوق العروض'}
                       </span>
-                      <span className="text-[10px] text-slate-500">{filteredOffers.length} إعلان</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-300">{filteredOffers.length} إعلان</span>
                     </button>
 
                     <button
                       onClick={() => setCurrentTab(2)}
-                      className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
+                      className="p-3 rounded-xl bg-white dark:bg-[#152238] border border-slate-200 dark:border-slate-800 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
                     >
                       <div
                         className="w-9 h-9 rounded-full flex items-center justify-center mb-1.5"
@@ -513,18 +516,18 @@ export default function App() {
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
                         {isDriver ? 'نشر جاهزية' : 'طلب ليفرور'}
                       </span>
-                      <span className="text-[10px] text-slate-500">نشر مجاني</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-300">نشر مجاني</span>
                     </button>
 
                     <button
                       onClick={() => setCurrentTab(3)}
-                      className="p-3 rounded-xl bg-white dark:bg-[#162032] border border-slate-200 dark:border-slate-700/60 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
+                      className="p-3 rounded-xl bg-white dark:bg-[#152238] border border-slate-200 dark:border-slate-700/60 text-center hover:border-slate-300 transition shadow-xs flex flex-col items-center"
                     >
                       <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center mb-1.5">
                         <DeliveryMotorcycleBoxIcon className="w-4 h-4" />
                       </div>
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">الليفرورات</span>
-                      <span className="text-[10px] text-slate-500">سائقون معتمدون</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-300">سائقون معتمدون</span>
                     </button>
                   </div>
                 </div>
@@ -970,7 +973,7 @@ export default function App() {
           </div>
 
           {/* Bottom Navigation Bar (Strictly 5 items: 1.الرئيسية, 2.العروض, 3.إضافة, 4.الليفرورات, 5.حسابي) */}
-          <div className="bg-slate-900 border-t border-slate-800 px-1 py-1.5 flex justify-around items-center select-none pb-3">
+          <div className="bg-[#0B1220] border-t border-slate-800 px-1 py-1.5 flex justify-around items-center select-none pb-3">
             {[
               { label: 'الرئيسية', icon: Store, index: 0 },
               { label: 'العروض', icon: ListFilter, index: 1 },
@@ -984,7 +987,7 @@ export default function App() {
                   key={label}
                   onClick={() => setCurrentTab(index)}
                   className={`flex flex-col items-center py-1 px-2.5 rounded-lg transition ${
-                    isSelected ? 'font-bold' : 'text-slate-400 hover:text-slate-200 font-medium'
+                    isSelected ? 'font-bold' : 'text-slate-300 hover:text-white font-medium'
                   }`}
                   style={{ color: isSelected ? activeColor : undefined }}
                 >
@@ -1000,7 +1003,7 @@ export default function App() {
                   >
                     <IconComponent className="w-4 h-4" />
                   </div>
-                  <span className="text-[10px] mt-0.5">{label}</span>
+                  <span className="text-[11px] mt-0.5">{label}</span>
                 </button>
               );
             })}

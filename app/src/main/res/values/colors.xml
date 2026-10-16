@@ -1,13 +1,18 @@
 <resources>
     <color name="primary_red">#D32F2F</color>
     <color name="primary_red_dark">#B71C1C</color>
-    <color name="primary_navy">#0F172A</color>
-    <color name="primary_navy_light">#1E293B</color>
+    <color name="primary_navy">#0B1220</color>
+    <color name="primary_navy_light">#172554</color>
+    <color name="shop_blue_primary">#1D4ED8</color>
+    <color name="shop_blue_dark">#172554</color>
+    <color name="driver_orange_primary">#EA580C</color>
     <color name="accent_gold">#F59E0B</color>
     <color name="bg_light">#F8FAFC</color>
-    <color name="bg_dark">#0B0F19</color>
+    <color name="bg_dark">#0B1220</color>
+    <color name="surface_dark">#152238</color>
     <color name="text_primary">#0F172A</color>
-    <color name="text_secondary">#64748B</color>
+    <color name="text_secondary">#475569</color>
+    <color name="text_secondary_dark">#CBD5E1</color>
     <color name="card_border">#E2E8F0</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
