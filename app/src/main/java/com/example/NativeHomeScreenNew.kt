@@ -214,7 +214,6 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
     }
 }
 
-// مكون الشعار الاحترافي: طريق أسمنتي بخطوط بيضاء وسهم منحني يتجه من المحل (اليمين) إلى الدراجة (اليسار)
 @Composable
 fun AmazonStyleLivlinkHeader(activeColor: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -228,13 +227,11 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
 
         Spacer(modifier = Modifier.height(3.dp))
 
-        // رسم الطريق الأسمنتي والسهم الاحترافي
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.width(130.dp)
         ) {
-            // المحل التجاري عند بداية الكلمة من جهة اليمين (RTL)
             Icon(
                 imageVector = Icons.Default.Store,
                 contentDescription = "محل",
@@ -257,14 +254,12 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
                     )
                 }
 
-                // 1. رسم قاعدة الطريق الأسمنتي (رمادي داكن / زيتي)
                 drawPath(
                     path = path,
                     color = Color(0xFF334155),
                     style = Stroke(width = 7f, cap = StrokeCap.Round)
                 )
 
-                // 2. رسم الخطوط البيضاء المتقطعة داخل الطريق الأسمنتي
                 drawPath(
                     path = path,
                     color = Color.White,
@@ -275,7 +270,6 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
                     )
                 )
 
-                // 3. رسم رأس السهم عند نهاية الطريق بالجهة اليسرى
                 val arrowPath = Path().apply {
                     moveTo(0f, 2f)
                     lineTo(8f, -2f)
@@ -285,7 +279,6 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
                 drawPath(arrowPath, color = activeColor)
             }
 
-            // الدراجة النارية عند نهاية السهم بجهة اليسار
             Icon(
                 painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                 contentDescription = "دراجة نارية",
@@ -296,7 +289,6 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // الجملة التوضيحية أصبحت أكبر ومتباعدة بشكل متناسق ومريح
         Text(
             text = "منصة ربط المحلات بالليفرورات",
             fontSize = 12.5.sp,
@@ -451,7 +443,6 @@ fun NativeHomeScreenNew(
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
                                 
-                                // الشعار المبتكر مع الجملة التوضيحية
                                 AmazonStyleLivlinkHeader(activeColor = activeColor)
                             }
 
@@ -535,7 +526,6 @@ fun NativeHomeScreenNew(
 
                         Spacer(modifier = Modifier.height(11.dp))
 
-                        // زر التبديل الرئيسي مكان شريط "منصة وطنية": توضيط النص والأيقونة بالمنتصف تماماً
                         Card(
                             colors = CardDefaults.cardColors(containerColor = activeColor.copy(alpha = 0.22f)),
                             shape = RoundedCornerShape(9.dp),
@@ -582,13 +572,11 @@ fun NativeHomeScreenNew(
 
                         Spacer(modifier = Modifier.height(11.dp))
 
-                        // وضع الزرين متطابقين تماماً في القياس (المدينة والحي)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // شريط المدن
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -648,7 +636,6 @@ fun NativeHomeScreenNew(
                                 }
                             }
 
-                            // شريط الأحياء
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -998,7 +985,6 @@ fun NativeHomeScreenNew(
     }
 }
 
-// شاشة إضافة إعلان طلب توصيل جديد - تم تحسين ألوان العناوين والأشرطة
 @Composable
 fun AddScreen(
     onDismiss: () -> Unit,
@@ -1006,6 +992,7 @@ fun AddScreen(
     initialCity: String = "جميع مدن المغرب",
     onAddSubmit: (title: String, city: String, phone: String, details: String, type: String, lat: Double?, lng: Double?, address: String?) -> Unit
 ) {
+    val context = LocalContext.current // تم تعريف السياق بشكل صحيح لمنع خطأ البناء
     var selectedType by remember { mutableStateOf(initialType) }
     var titleText by remember { mutableStateOf("") }
     var cityText by remember { mutableStateOf(if (initialCity == "جميع مدن المغرب") "الدار البيضاء" else initialCity) }
@@ -1022,7 +1009,6 @@ fun AddScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            // شريط العنوان العلوي - تم توحيد اللون والأنماط مع بقية التطبيق
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1043,7 +1029,6 @@ fun AddScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // باقي محتوى الواجهة داخل بطاقة واضحة وبارزة
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -1102,7 +1087,6 @@ fun AddScreen(
                             .height(100.dp)
                     )
 
-                    // تحسين وضوح شريط الخريطة والموقع الجغرافي بشكل ممتاز
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
