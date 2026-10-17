@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,7 +20,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -57,25 +62,24 @@ val MOROCCAN_CITIES = listOf(
     "بني ملال"
 )
 
-// قائمة الأحياء التابعة لكل مدينة مغربية
 val CITY_DISTRICTS_MAP = mapOf(
-    "جميع مدن المغرب" to listOf("جميع الأحياء"),
-    "الدار البيضاء" to listOf("جميع الأحياء", "المعاريف", "أنفا", "سيدي معروف", "عين الشق", "سيدي مومن", "المحمدية / البرنوصي", "المعاصرة / الوداد"),
-    "الرباط" to listOf("جميع الأحياء", "أكدال", "حسان", "السويسي", "اليوسفية", "المحيط", "يعقوب المنصور"),
-    "فاس" to listOf("جميع الأحياء", "فاس الجديد", "النرجس", "المدينة العتيقة", "المحطة الطرقية", "ب سيدي إبراهيم"),
-    "مراكش" to listOf("جميع الأحياء", "جيليز", "المحاميد", "المدينة المنورة", "سيدي غانم", "تكيوت"),
-    "طنجة" to listOf("جميع الأحياء", "طنجة المدينة", "بني مكادة", "المرس", "المنطقة الحرة", "الشرقاوية"),
-    "أكادير" to listOf("جميع الأحياء", "تالبورجت", "حي السلام", "المنصورية", "انزكان", "الدشيرة"),
-    "سلا" to listOf("جميع الأحياء", "بطانة", "سمعة", "حي السلام", "سيدي موسى"),
-    "مكناس" to listOf("جميع الأحياء", "حمرية", "المدينة القديمة", "سيدي بوجعفر"),
-    "وجدة" to listOf("جميع الأحياء", "القدس", "حي السلام", "وسط المدينة"),
-    "القنيطرة" to listOf("جميع الأحياء", "المدينة", "البطاح", "الميمونة"),
-    "تطوان" to listOf("جميع الأحياء", "المدينة العتيقة", "الخازن", "المحنش"),
-    "أسفي" to listOf("جميع الأحياء", "المدينة", "البياضية"),
-    "محمدية" to listOf("جميع الأحياء", "المركز", "الياسمين"),
-    "خريبكة" to listOf("جميع الأحياء", "الولفة", "القدس"),
-    "الجديدة" to listOf("جميع الأحياء", "سيدي الضاوي", "حي المطار"),
-    "بني ملال" to listOf("جميع الأحياء", "الصومعة", "الرياض")
+    "جميع مدن المغرب" to listOf("اختر الحي", "جميع الأحياء"),
+    "الدار البيضاء" to listOf("اختر الحي", "جميع الأحياء", "المعاريف", "أنفا", "سيدي معروف", "عين الشق", "سيدي مومن", "المحمدية / البرنوصي"),
+    "الرباط" to listOf("اختر الحي", "جميع الأحياء", "أكدال", "حسان", "السويسي", "اليوسفية", "المحيط", "يعقوب المنصور"),
+    "فاس" to listOf("اختر الحي", "جميع الأحياء", "فاس الجديد", "النرجس", "المدينة العتيقة", "المحطة الطرقية"),
+    "مراكش" to listOf("اختر الحي", "جميع الأحياء", "جيليز", "المحاميد", "المدينة المنورة", "سيدي غانم"),
+    "طنجة" to listOf("اختر الحي", "جميع الأحياء", "طنجة المدينة", "بني مكادة", "المرس", "المنطقة الحرة"),
+    "أكادير" to listOf("اختر الحي", "جميع الأحياء", "تالبورجت", "حي السلام", "المنصورية", "انزكان"),
+    "سلا" to listOf("اختر الحي", "جميع الأحياء", "بطانة", "سمعة", "حي السلام"),
+    "مكناس" to listOf("اختر الحي", "جميع الأحياء", "حمرية", "المدينة القديمة"),
+    "وجدة" to listOf("اختر الحي", "جميع الأحياء", "القدس", "حي السلام"),
+    "القنيطرة" to listOf("اختر الحي", "جميع الأحياء", "المدينة", "البطاح"),
+    "تطوان" to listOf("اختر الحي", "جميع الأحياء", "المدينة العتيقة", "المحنش"),
+    "أسفي" to listOf("اختر الحي", "جميع الأحياء", "المدينة", "البياضية"),
+    "محمدية" to listOf("اختر الحي", "جميع الأحياء", "المركز", "الياسمين"),
+    "خريبكة" to listOf("اختر الحي", "جميع الأحياء", "الولفة", "القدس"),
+    "الجديدة" to listOf("اختر الحي", "جميع الأحياء", "سيدي الضاوي", "حي المطار"),
+    "بني ملال" to listOf("اختر الحي", "جميع الأحياء", "الصومعة", "الرياض")
 )
 
 data class DeliveryOffer(
@@ -143,7 +147,7 @@ fun loadOffersFromPrefs(context: Context): List<DeliveryOffer>? {
                     id = obj.optString("id", System.currentTimeMillis().toString()),
                     title = obj.optString("title", ""),
                     city = obj.optString("city", "الدار البيضاء"),
-                    district = obj.optString("district", "جميع الأحياء"),
+                    district = obj.optString("district", "اختر الحي"),
                     roleType = obj.optString("roleType", "طلب توصيل"),
                     phone = obj.optString("phone", ""),
                     timeAgo = obj.optString("timeAgo", "مؤخراً"),
@@ -209,6 +213,77 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
     }
 }
 
+// المكون المبتكر لشعار LIVLINK على شكل سهم وطريق أمازون بين المحل والدراجة النارية
+@Composable
+fun AmazonStyleLivlinkHeader(activeColor: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "LIVLINK",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Black,
+            color = Color.White,
+            letterSpacing = 1.sp
+        )
+        
+        Spacer(modifier = Modifier.height(2.dp))
+
+        // رسم الطريق والسهم المنحني بأسلوب أسرع وأوضح
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.width(110.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Store,
+                contentDescription = "محل",
+                tint = activeColor,
+                modifier = Modifier.size(12.dp)
+            )
+
+            Canvas(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(10.dp)
+                    .padding(horizontal = 2.dp)
+            ) {
+                val path = Path().apply {
+                    moveTo(size.width, 1f)
+                    cubicTo(
+                        size.width * 0.7f, size.height * 1.2f,
+                        size.width * 0.3f, size.height * 1.2f,
+                        0f, 1f
+                    )
+                }
+
+                drawPath(
+                    path = path,
+                    color = activeColor,
+                    style = Stroke(
+                        width = 3f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f), 0f)
+                    )
+                )
+            }
+
+            Icon(
+                painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
+                contentDescription = "دراجة نارية",
+                tint = DriverOrangePrimary,
+                modifier = Modifier.size(13.dp)
+            )
+        }
+
+        Text(
+            text = "منصة ربط المحلات بالليفرورات",
+            fontSize = 11.5.sp,
+            color = Color(0xFFE2E8F0),
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NativeHomeScreenNew(
@@ -224,7 +299,7 @@ fun NativeHomeScreenNew(
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         var currentTab by remember { mutableIntStateOf(0) }
         var selectedCity by remember { mutableStateOf("جميع مدن المغرب") }
-        var selectedDistrict by remember { mutableStateOf("جميع الأحياء") }
+        var selectedDistrict by remember { mutableStateOf("اختر الحي") }
 
         var cityDropdownExpanded by remember { mutableStateOf(false) }
         var districtDropdownExpanded by remember { mutableStateOf(false) }
@@ -351,22 +426,9 @@ fun NativeHomeScreenNew(
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text(
-                                        text = "LIVLINK",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color.White
-                                    )
-                                    Text(
-                                        text = "منصة ربط المحلات بالليفرورات",
-                                        fontSize = 12.sp,
-                                        color = Color(0xFFE2E8F0),
-                                        fontWeight = FontWeight.Medium,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
+                                
+                                // شعار LIVLINK بأسلوب طريق وأمازون المحدث
+                                AmazonStyleLivlinkHeader(activeColor = activeColor)
                             }
 
                             Spacer(modifier = Modifier.width(12.dp))
@@ -476,59 +538,21 @@ fun NativeHomeScreenNew(
 
                         Spacer(modifier = Modifier.height(11.dp))
 
-                        // أزرار اختيار المدينة واختيار الحي تحتها مباشرة
+                        // وضع الزرين متطابقين في القياس جنبًا إلى جنب (المدينة والحي)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(9.dp))
-                                    .background(activeColor.copy(alpha = 0.18f))
-                                    .border(1.dp, activeColor.copy(alpha = 0.5f), RoundedCornerShape(9.dp))
-                                    .clickable {
-                                        val newRole = if (isDriver) "صاحب محل" else "ليفرور"
-                                        onRoleChange(newRole)
-                                    }
-                                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    if (isDriver) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
-                                            contentDescription = null,
-                                            tint = activeColor,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Default.Store,
-                                            contentDescription = null,
-                                            tint = activeColor,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = if (isDriver) "وضع الليفرور (نشط)" else "وضع صاحب المحل (نشط)",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-
-                            // شريط اختيار المدينة
+                            // شريط جميع مدن المغرب
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clip(RoundedCornerShape(9.dp))
                                     .background(NavySecondary)
+                                    .border(1.dp, Color(0xFF334155), RoundedCornerShape(9.dp))
                                     .clickable { cityDropdownExpanded = true }
-                                    .padding(horizontal = 10.dp, vertical = 8.dp)
+                                    .padding(horizontal = 10.dp, vertical = 9.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -548,7 +572,7 @@ fun NativeHomeScreenNew(
                                         Spacer(modifier = Modifier.width(5.dp))
                                         Text(
                                             text = selectedCity,
-                                            fontSize = 13.sp,
+                                            fontSize = 12.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White,
                                             maxLines = 1,
@@ -572,73 +596,71 @@ fun NativeHomeScreenNew(
                                             text = { Text(city, fontSize = 13.sp, fontWeight = FontWeight.Medium) },
                                             onClick = {
                                                 selectedCity = city
-                                                selectedDistrict = "جميع الأحياء" // إعادة تعيين الحي عند تغيير المدينة
+                                                selectedDistrict = "اختر الحي"
                                                 cityDropdownExpanded = false
                                             }
                                         )
                                     }
                                 }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // الشريط الجديد: خاص بالأحياء التابعة للمدينة المحددة
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(9.dp))
-                                .background(NavySecondary)
-                                .border(1.dp, activeColor.copy(alpha = 0.4f), RoundedCornerShape(9.dp))
-                                .clickable { districtDropdownExpanded = true }
-                                .padding(horizontal = 12.dp, vertical = 10.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            // شريط الأحياء بنفس قياس شريط جميع مدن المغرب تماماً
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(9.dp))
+                                    .background(NavySecondary)
+                                    .border(1.dp, activeColor.copy(alpha = 0.5f), RoundedCornerShape(9.dp))
+                                    .clickable { districtDropdownExpanded = true }
+                                    .padding(horizontal = 10.dp, vertical = 9.dp)
                             ) {
                                 Row(
+                                    modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Map,
+                                            contentDescription = null,
+                                            tint = activeColor,
+                                            modifier = Modifier.size(15.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Text(
+                                            text = selectedDistrict,
+                                            fontSize = 12.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                     Icon(
-                                        imageVector = Icons.Default.Map,
+                                        imageVector = Icons.Default.ArrowDropDown,
                                         contentDescription = null,
-                                        tint = activeColor,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "حي: $selectedDistrict (${if (selectedCity == "جميع مدن المغرب") "كل المدن" else selectedCity})",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
-                                Icon(
-                                    imageVector = Icons.Default.ArrowDropDown,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
 
-                            DropdownMenu(
-                                expanded = districtDropdownExpanded,
-                                onDismissRequest = { districtDropdownExpanded = false }
-                            ) {
-                                val availableDistricts = CITY_DISTRICTS_MAP[selectedCity] ?: listOf("جميع الأحياء")
-                                availableDistricts.forEach { district ->
-                                    DropdownMenuItem(
-                                        text = { Text(district, fontSize = 13.sp, fontWeight = FontWeight.Medium) },
-                                        onClick = {
-                                            selectedDistrict = district
-                                            districtDropdownExpanded = false
-                                        }
-                                    )
+                                DropdownMenu(
+                                    expanded = districtDropdownExpanded,
+                                    onDismissRequest = { districtDropdownExpanded = false }
+                                ) {
+                                    val availableDistricts = CITY_DISTRICTS_MAP[selectedCity] ?: listOf("اختر الحي", "جميع الأحياء")
+                                    availableDistricts.forEach { district ->
+                                        DropdownMenuItem(
+                                            text = { Text(district, fontSize = 13.sp, fontWeight = FontWeight.Medium) },
+                                            onClick = {
+                                                selectedDistrict = district
+                                                districtDropdownExpanded = false
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -714,7 +736,7 @@ fun NativeHomeScreenNew(
             ) {
                 val filteredOffers = offersList.filter { offer ->
                     val matchesCity = (selectedCity == "جميع مدن المغرب" || offer.city == selectedCity)
-                    val matchesDistrict = (selectedDistrict == "جميع الأحياء" || offer.district.contains(selectedDistrict))
+                    val matchesDistrict = (selectedDistrict == "اختر الحي" || selectedDistrict == "جميع الأحياء" || offer.district.contains(selectedDistrict))
                     matchesCity && matchesDistrict
                 }
 
@@ -724,7 +746,7 @@ fun NativeHomeScreenNew(
                         activeColor = activeColor,
                         selectedCity = selectedCity,
                         selectedDistrict = selectedDistrict,
-                        isDriverAvailable = isDriverDriverAvailableRefactored(isDriverAvailable),
+                        isDriverAvailable = isDriverAvailable,
                         onToggleDriverAvailability = { isDriverAvailable = !isDriverAvailable },
                         offers = filteredOffers,
                         onNavigateToOffers = { currentTab = 1 },
@@ -768,7 +790,7 @@ fun NativeHomeScreenNew(
                                 id = System.currentTimeMillis().toString(),
                                 title = title,
                                 city = city,
-                                district = selectedDistrict,
+                                district = if (selectedDistrict == "اختر الحي") "جميع الأحياء" else selectedDistrict,
                                 roleType = type,
                                 phone = phone,
                                 timeAgo = "الآن",
@@ -932,8 +954,6 @@ fun NativeHomeScreenNew(
     }
 }
 
-fun isDriverDriverAvailableRefactored(status: Boolean): Boolean = status
-
 @Composable
 fun HomeTabContent(
     isDriver: Boolean,
@@ -989,10 +1009,9 @@ fun HomeTabContent(
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    // التعديل المطلوب بدقة للنص في واجهة الليفرور
                     Text(
                         text = if (isDriver) "تصفح طلبيات المحلات والمطاعم بجميع أحياء ومدن المغرب وتواصل فوراً مع أصحابها."
-                        else "اعثر على ليفرور موثوق لمحلك في $selectedCity ($selectedDistrict) وقم بإرسال طلبيات زبائنك بسرعة وأمان.",
+                        else "اعثر على ليفرور موثوق لمحلك في $selectedCity (${if (selectedDistrict == "اختر الحي") "جميع الأحياء" else selectedDistrict}) وقم بإرسال طلبيات زبائنك بسرعة وأمان.",
                         fontSize = 13.5.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Medium,
@@ -1018,7 +1037,6 @@ fun HomeTabContent(
             }
         }
 
-        // معالجة مشكلة شريط "حالتك" في الوضع الليلي أو العادي ليكون واضحاً وجلياً تماماً
         if (isDriver) {
             item {
                 Card(
@@ -1063,12 +1081,17 @@ fun HomeTabContent(
             }
         }
 
+        // تحسين ألوان وإطارات البطاقات لتبرز في الوضع النهاري بعيداً عن الرتابة
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Card(
-                    modifier = Modifier.weight(1f).clickable { onNavigateToOffers() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onNavigateToOffers() }
+                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(imageVector = Icons.Default.ListAlt, contentDescription = null, tint = activeColor, modifier = Modifier.size(22.dp))
@@ -1078,9 +1101,13 @@ fun HomeTabContent(
                 }
 
                 Card(
-                    modifier = Modifier.weight(1f).clickable { onNavigateToAdd() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onNavigateToAdd() }
+                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(imageVector = Icons.Default.AddCircle, contentDescription = null, tint = activeColor, modifier = Modifier.size(22.dp))
@@ -1090,9 +1117,13 @@ fun HomeTabContent(
                 }
 
                 Card(
-                    modifier = Modifier.weight(1f).clickable { onNavigateToDrivers() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onNavigateToDrivers() }
+                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(22.dp))
@@ -1119,7 +1150,14 @@ fun HomeTabContent(
 
         if (offers.isEmpty()) {
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(imageVector = Icons.Default.Inbox, contentDescription = null, tint = activeColor, modifier = Modifier.size(40.dp))
                         Spacer(modifier = Modifier.height(8.dp))
@@ -1209,7 +1247,12 @@ fun OffersTabContent(
 
         if (displayOffers.isEmpty()) {
             item {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "لا توجد إعلانات مطابقة حالياً", fontSize = 13.5.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
                     }
@@ -1262,7 +1305,9 @@ fun DriversTabContent(
         if (drivers.isEmpty()) {
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1288,7 +1333,8 @@ fun DriversTabContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onSelectDriver(driver) },
+                        .clickable { onSelectDriver(driver) }
+                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     shape = RoundedCornerShape(12.dp)
@@ -1423,7 +1469,9 @@ fun ProfileTabContent(
     ) {
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(16.dp)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -1482,7 +1530,9 @@ fun ProfileTabContent(
 
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(16.dp)),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -1552,7 +1602,10 @@ fun OfferItemCard(
     val isDriverOffer = offer.roleType == "عرض توصيل"
 
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
