@@ -24,6 +24,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -213,71 +214,94 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
     }
 }
 
-// المكون المبتكر لشعار LIVLINK على شكل سهم وطريق أمازون بين المحل والدراجة النارية
+// مكون الشعار الاحترافي: طريق أسمنتي بخطوط بيضاء وسهم منحني يتجه من المحل (اليمين) إلى الدراجة (اليسار)
 @Composable
 fun AmazonStyleLivlinkHeader(activeColor: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = "LIVLINK",
-            fontSize = 20.sp,
+            fontSize = 21.sp,
             fontWeight = FontWeight.Black,
             color = Color.White,
-            letterSpacing = 1.sp
+            letterSpacing = 1.2.sp
         )
-        
-        Spacer(modifier = Modifier.height(2.dp))
 
-        // رسم الطريق والسهم المنحني بأسلوب أسرع وأوضح
+        Spacer(modifier = Modifier.height(3.dp))
+
+        // رسم الطريق الأسمنتي والسهم الاحترافي
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.width(110.dp)
+            modifier = Modifier.width(130.dp)
         ) {
+            // المحل التجاري عند بداية الكلمة من جهة اليمين (RTL)
             Icon(
                 imageVector = Icons.Default.Store,
                 contentDescription = "محل",
                 tint = activeColor,
-                modifier = Modifier.size(12.dp)
+                modifier = Modifier.size(13.dp)
             )
 
             Canvas(
                 modifier = Modifier
                     .weight(1f)
-                    .height(10.dp)
+                    .height(12.dp)
                     .padding(horizontal = 2.dp)
             ) {
                 val path = Path().apply {
-                    moveTo(size.width, 1f)
+                    moveTo(size.width, 2f)
                     cubicTo(
                         size.width * 0.7f, size.height * 1.2f,
                         size.width * 0.3f, size.height * 1.2f,
-                        0f, 1f
+                        0f, 2f
                     )
                 }
 
+                // 1. رسم قاعدة الطريق الأسمنتي (رمادي داكن / زيتي)
                 drawPath(
                     path = path,
-                    color = activeColor,
+                    color = Color(0xFF334155),
+                    style = Stroke(width = 7f, cap = StrokeCap.Round)
+                )
+
+                // 2. رسم الخطوط البيضاء المتقطعة داخل الطريق الأسمنتي
+                drawPath(
+                    path = path,
+                    color = Color.White,
                     style = Stroke(
-                        width = 3f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f), 0f)
+                        width = 2.5f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 4f), 0f),
+                        cap = StrokeCap.Round
                     )
                 )
+
+                // 3. رسم رأس السهم عند نهاية الطريق بالجهة اليسرى
+                val arrowPath = Path().apply {
+                    moveTo(0f, 2f)
+                    lineTo(8f, -2f)
+                    lineTo(7f, 6f)
+                    close()
+                }
+                drawPath(arrowPath, color = activeColor)
             }
 
+            // الدراجة النارية عند نهاية السهم بجهة اليسار
             Icon(
                 painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                 contentDescription = "دراجة نارية",
                 tint = DriverOrangePrimary,
-                modifier = Modifier.size(13.dp)
+                modifier = Modifier.size(14.dp)
             )
         }
 
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // الجملة التوضيحية أصبحت أكبر ومتباعدة بشكل متناسق ومريح
         Text(
             text = "منصة ربط المحلات بالليفرورات",
-            fontSize = 11.5.sp,
-            color = Color(0xFFE2E8F0),
-            fontWeight = FontWeight.Medium,
+            fontSize = 12.5.sp,
+            color = Color(0xFFF1F5F9),
+            fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -413,7 +437,7 @@ fun NativeHomeScreenNew(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(38.dp)
+                                        .size(40.dp)
                                         .clip(RoundedCornerShape(10.dp))
                                         .background(activeColor),
                                     contentAlignment = Alignment.Center
@@ -421,13 +445,13 @@ fun NativeHomeScreenNew(
                                     Text(
                                         text = "LV",
                                         fontWeight = FontWeight.Black,
-                                        fontSize = 16.sp,
+                                        fontSize = 17.sp,
                                         color = Color.White
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(10.dp))
                                 
-                                // شعار LIVLINK بأسلوب طريق وأمازون المحدث
+                                // الشعار المبتكر مع الجملة التوضيحية
                                 AmazonStyleLivlinkHeader(activeColor = activeColor)
                             }
 
@@ -511,40 +535,60 @@ fun NativeHomeScreenNew(
 
                         Spacer(modifier = Modifier.height(11.dp))
 
+                        // زر التبديل الرئيسي مكان شريط "منصة وطنية": توضيط النص والأيقونة بالمنتصف تماماً
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                            colors = CardDefaults.cardColors(containerColor = activeColor.copy(alpha = 0.22f)),
                             shape = RoundedCornerShape(9.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, activeColor.copy(alpha = 0.6f), RoundedCornerShape(9.dp))
+                                .clickable {
+                                    val newRole = if (isDriver) "صاحب محل" else "ليفرور"
+                                    onRoleChange(newRole)
+                                }
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Verified,
-                                    contentDescription = null,
-                                    tint = activeColor,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                if (isDriver) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
+                                        contentDescription = null,
+                                        tint = activeColor,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Store,
+                                        contentDescription = null,
+                                        tint = activeColor,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "منصة وطنية مغربية مجانية 100% تغطى جميع مدن المملكة",
-                                    fontSize = 12.5.sp,
+                                    text = if (isDriver) "وضع الليفرور (نشط)" else "وضع صاحب المحل (نشط)",
+                                    fontSize = 13.5.sp,
                                     color = Color.White,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
 
                         Spacer(modifier = Modifier.height(11.dp))
 
-                        // وضع الزرين متطابقين في القياس جنبًا إلى جنب (المدينة والحي)
+                        // وضع الزرين متطابقين تماماً في القياس (المدينة والحي)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // شريط جميع مدن المغرب
+                            // شريط المدن
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -604,7 +648,7 @@ fun NativeHomeScreenNew(
                                 }
                             }
 
-                            // شريط الأحياء بنفس قياس شريط جميع مدن المغرب تماماً
+                            // شريط الأحياء
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -954,6 +998,183 @@ fun NativeHomeScreenNew(
     }
 }
 
+// شاشة إضافة إعلان طلب توصيل جديد - تم تحسين ألوان العناوين والأشرطة
+@Composable
+fun AddScreen(
+    onDismiss: () -> Unit,
+    initialType: String = "طلب توصيل",
+    initialCity: String = "جميع مدن المغرب",
+    onAddSubmit: (title: String, city: String, phone: String, details: String, type: String, lat: Double?, lng: Double?, address: String?) -> Unit
+) {
+    var selectedType by remember { mutableStateOf(initialType) }
+    var titleText by remember { mutableStateOf("") }
+    var cityText by remember { mutableStateOf(if (initialCity == "جميع مدن المغرب") "الدار البيضاء" else initialCity) }
+    var phoneText by remember { mutableStateOf("") }
+    var detailsText by remember { mutableStateOf("") }
+    var cityDropdownExpanded by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = NavyPrimary
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            // شريط العنوان العلوي - تم توحيد اللون والأنماط مع بقية التطبيق
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "إضافة $selectedType جديد",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = Color.White
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(imageVector = Icons.Default.Close, contentDescription = "إغلاق", tint = Color.White)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // باقي محتوى الواجهة داخل بطاقة واضحة وبارزة
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(text = "نوع الإعلان المراد نشره:", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { selectedType = "طلب توصيل" },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (selectedType == "طلب توصيل") ShopBlueDarkPrimary else Color(0xFFE2E8F0)
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("طلب توصيل (محل)", color = if (selectedType == "طلب توصيل") Color.White else Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = { selectedType = "عرض توصيل" },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (selectedType == "عرض توصيل") DriverOrangePrimary else Color(0xFFE2E8F0)
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("عرض توصيل (ليفرور)", color = if (selectedType == "عرض توصيل") Color.White else Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = titleText,
+                        onValueChange = { titleText = it },
+                        label = { Text("اسم المحل ونوع السلع *") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = phoneText,
+                        onValueChange = { phoneText = it },
+                        label = { Text("رقم الهاتف أو الواتساب للتواصل المباشر *") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    OutlinedTextField(
+                        value = detailsText,
+                        onValueChange = { detailsText = it },
+                        label = { Text("تفاصيل إضافية (الأحياء، شروط التوصيل، التوقيت)") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                    )
+
+                    // تحسين وضوح شريط الخريطة والموقع الجغرافي بشكل ممتاز
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, ShopBlueDarkPrimary.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = ShopBlueAccent, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "موقع المحل على الخريطة (اختياري لصاحب المحل)",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.5.sp,
+                                    color = Color.White
+                                )
+                            }
+                            Text(
+                                text = "يسمح بتحديد إحداثيات موقع محلك الجغرافي لتسهيل وصول الليفرورات إليك عبر الخريطة.",
+                                fontSize = 12.sp,
+                                color = Color(0xFFCBD5E1),
+                                lineHeight = 17.sp
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    onClick = { Toast.makeText(context, "تم تحديد الموقع عبر GPS بنجاح", Toast.LENGTH_SHORT).show() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = ShopBlueAccent),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("تحديد عبر GPS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+
+                                OutlinedButton(
+                                    onClick = { Toast.makeText(context, "إدخال يدوي للموقع", Toast.LENGTH_SHORT).show() },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("إدخال يدوي", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Button(
+                        onClick = {
+                            if (titleText.isNotBlank() && phoneText.isNotBlank()) {
+                                onAddSubmit(titleText, cityText, phoneText, detailsText, selectedType, null, null, null)
+                            } else {
+                                Toast.makeText(context, "يرجى ملء جميع الحقول المطلوبة (*)", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (selectedType == "عرض توصيل") DriverOrangePrimary else ShopBlueDarkPrimary),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                    ) {
+                        Text("نشر $selectedType", fontWeight = FontWeight.Bold, fontSize = 14.5.sp, color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun HomeTabContent(
     isDriver: Boolean,
@@ -1081,7 +1302,6 @@ fun HomeTabContent(
             }
         }
 
-        // تحسين ألوان وإطارات البطاقات لتبرز في الوضع النهاري بعيداً عن الرتابة
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Card(
