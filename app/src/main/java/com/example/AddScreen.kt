@@ -39,7 +39,7 @@ import com.example.ui.theme.NavyPrimary
 import com.example.ui.theme.NavySecondary
 import com.example.ui.theme.ShopBluePrimary
 
-val MOROCCAN_CITIES = listOf(
+val MOROCCAN_CITIES_LIST = listOf(
     "جميع مدن المغرب",
     "الدار البيضاء",
     "الرباط",
@@ -98,7 +98,6 @@ fun AddScreen(
         var phone by remember { mutableStateOf("") }
         var details by remember { mutableStateOf("") }
 
-        // Shop-only Location State (Strictly prohibited for Driver)
         var shopLatitude by remember { mutableStateOf<Double?>(null) }
         var shopLongitude by remember { mutableStateOf<Double?>(null) }
         var shopAddress by remember { mutableStateOf("") }
@@ -109,7 +108,6 @@ fun AddScreen(
         var isSubmitted by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
 
-        // GPS Location Fetching
         fun detectCurrentLocation() {
             try {
                 val finePerm = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -250,7 +248,6 @@ fun AddScreen(
                             .navigationBarsPadding(),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        // Type Selector (Shop vs Driver)
                         Text(
                             text = "نوع الإعلان المراد نشره:",
                             fontWeight = FontWeight.Bold,
@@ -261,7 +258,6 @@ fun AddScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Option 1: Shop Delivery Request
                             ElevatedCard(
                                 onClick = { selectedType = "طلب توصيل" },
                                 modifier = Modifier.weight(1f),
@@ -294,11 +290,9 @@ fun AddScreen(
                                 }
                             }
 
-                            // Option 2: Driver Delivery Offer
                             ElevatedCard(
                                 onClick = {
                                     selectedType = "عرض توصيل"
-                                    // Reset shop location since driver must never have a map/location
                                     shopLatitude = null
                                     shopLongitude = null
                                     shopAddress = ""
@@ -334,7 +328,6 @@ fun AddScreen(
                             }
                         }
 
-                        // Title field - Fixed Typo «وننوع» to «ونوع»
                         OutlinedTextField(
                             value = title,
                             onValueChange = { title = it },
@@ -354,7 +347,6 @@ fun AddScreen(
                             shape = RoundedCornerShape(10.dp)
                         )
 
-                        // City selector dropdown
                         Column {
                             Text(
                                 text = "المدينة التابعة للإعلان *",
@@ -402,7 +394,7 @@ fun AddScreen(
                                     expanded = cityDropdownExpanded,
                                     onDismissRequest = { cityDropdownExpanded = false }
                                 ) {
-                                    MOROCCAN_CITIES.filter { it != "جميع مدن المغرب" }.forEach { city ->
+                                    MOROCCAN_CITIES_LIST.filter { it != "جميع مدن المغرب" }.forEach { city ->
                                         DropdownMenuItem(
                                             text = { Text(city, fontSize = 13.sp) },
                                             onClick = {
@@ -415,7 +407,6 @@ fun AddScreen(
                             }
                         }
 
-                        // Phone field
                         OutlinedTextField(
                             value = phone,
                             onValueChange = { phone = it },
@@ -434,7 +425,6 @@ fun AddScreen(
                             shape = RoundedCornerShape(10.dp)
                         )
 
-                        // Details field
                         OutlinedTextField(
                             value = details,
                             onValueChange = { details = it },
@@ -453,10 +443,6 @@ fun AddScreen(
                             shape = RoundedCornerShape(10.dp)
                         )
 
-                        // -------------------------------------------------------------
-                        // SECTION 4: SHOP LOCATION PICKER (STRICTLY FOR SHOP OWNER ONLY)
-                        // ABSOLUTELY NO MAP OR LOCATION SHOWN FOR DRIVER
-                        // -------------------------------------------------------------
                         if (!isDriverType) {
                             Card(
                                 colors = CardDefaults.cardColors(containerColor = NavySecondary.copy(alpha = 0.5f)),
@@ -603,7 +589,6 @@ fun AddScreen(
                             }
                         }
 
-                        // Error message display
                         if (errorMessage != null) {
                             Text(
                                 text = errorMessage ?: "",
@@ -615,7 +600,6 @@ fun AddScreen(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Submit Button
                         Button(
                             onClick = {
                                 val cleanTitle = title.trim()
@@ -656,7 +640,6 @@ fun AddScreen(
                     }
                 }
 
-                // Manual Coordinates Dialog for Shop Owner
                 if (showManualCoordDialog) {
                     AlertDialog(
                         onDismissRequest = { showManualCoordDialog = false },
@@ -709,7 +692,6 @@ fun AddScreen(
                                         showManualCoordDialog = false
                                         Toast.makeText(context, "تم حفظ الإحداثيات بنجاح", Toast.LENGTH_SHORT).show()
                                     } else if (shopAddress.isNotBlank()) {
-                                        // Default fallback coordinates around Casablanca if only address provided
                                         shopLatitude = 33.5731
                                         shopLongitude = -7.5898
                                         showManualCoordDialog = false
@@ -720,7 +702,7 @@ fun AddScreen(
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = ShopBluePrimary)
                             ) {
-                                Text("تأكيد وحفظ الموقع")
+                                Text("تعديل وحفظ الموقع")
                             }
                         },
                         dismissButton = {
