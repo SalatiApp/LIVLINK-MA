@@ -33,7 +33,29 @@ import com.example.ui.theme.BackgroundDark
 import com.example.ui.theme.DriverOrangePrimary
 import com.example.ui.theme.NavyPrimary
 import com.example.ui.theme.NavySecondary
-import com.example.ui.theme.ShopBluePrimary
+
+// اللون البنفسجي المخصص لوضع صاحب المحل بناءً على طلبك
+val ShopPurplePrimary = Color(0xFF8B5CF6)
+
+val MOROCCAN_CITIES = listOf(
+    "جميع مدن المغرب",
+    "الدار البيضاء",
+    "الرباط",
+    "فاس",
+    "مراكش",
+    "طنجة",
+    "أكادير",
+    "سلا",
+    "مكناس",
+    "وجدة",
+    "القنيطرة",
+    "تطوان",
+    "أسفي",
+    "محمدية",
+    "خريبكة",
+    "الجديدة",
+    "بني ملال"
+)
 
 data class DeliveryOffer(
     val id: String,
@@ -181,26 +203,21 @@ fun NativeHomeScreenNew(
 ) {
     val context = LocalContext.current
     val isDriver = currentRole == "ليفرور"
-    val activeColor = if (isDriver) DriverOrangePrimary else ShopBluePrimary
+    val activeColor = if (isDriver) DriverOrangePrimary else ShopPurplePrimary
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        // Bottom nav tabs strictly in order:
-        // 0: الرئيسية, 1: العروض, 2: إضافة (center), 3: الليفرورات, 4: حسابي
         var currentTab by remember { mutableIntStateOf(0) }
         var selectedCity by remember { mutableStateOf("جميع مدن المغرب") }
         var cityDropdownExpanded by remember { mutableStateOf(false) }
         var isDriverAvailable by remember { mutableStateOf(true) }
 
-        // Selected offer for details dialog
         var selectedOfferForDetails by remember { mutableStateOf<DeliveryOffer?>(null) }
         var selectedDriverForDetails by remember { mutableStateOf<DriverProfile?>(null) }
 
-        // Edit Profile Dialog state
         var showEditProfileDialog by remember { mutableStateOf(false) }
         var profileName by remember { mutableStateOf(if (isDriver) "سائق توصيل معتمد" else "محل تجاري - ليفلينك") }
         var profilePhone by remember { mutableStateOf("0661234567") }
 
-        // Persistent Offers list
         val defaultInitialOffers = remember {
             listOf(
                 DeliveryOffer(
@@ -440,15 +457,15 @@ fun NativeHomeScreenNew(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(CircleShape)
-                                        .background(if (!isDriver) ShopBluePrimary else Color(0xFF1E293B))
+                                        .background(if (!isDriver) ShopPurplePrimary else Color(0xFF1E293B))
                                         .border(
                                             width = 1.dp,
-                                            color = if (!isDriver) Color(0xFF93C5FD) else Color(0xFF334155),
+                                            color = if (!isDriver) Color(0xFFDDD6FE) else Color(0xFF334155),
                                             shape = CircleShape
                                         )
                                         .clickable {
                                             onRoleChange("صاحب محل")
-                                            Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل (البنفسجي)", Toast.LENGTH_SHORT).show()
                                         },
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -494,9 +511,7 @@ fun NativeHomeScreenNew(
                                             color = Color(0xFF334155),
                                             shape = CircleShape
                                         )
-                                        .clickable {
-                                            onToggleDarkMode()
-                                        },
+                                        .clickable { onToggleDarkMode() },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
@@ -847,6 +862,20 @@ fun NativeHomeScreenNew(
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("واتساب")
                                 }
+
+                                if (offer.roleType == "طلب توصيل" && ((offer.latitude != null && offer.longitude != null) || !offer.locationAddress.isNullOrBlank())) {
+                                    Button(
+                                        onClick = {
+                                            openMap(offer.latitude, offer.longitude, offer.title, offer.locationAddress)
+                                            selectedOfferForDetails = null
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = ShopPurplePrimary)
+                                    ) {
+                                        Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("الخريطة")
+                                    }
+                                }
                             }
                         },
                         dismissButton = {
@@ -1053,9 +1082,7 @@ fun HomeTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier.size(10.dp).clip(CircleShape).background(if (isDriverAvailable) Color(0xFF16A34A) else Color.Gray)
-                            )
+                            Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(if (isDriverAvailable) Color(0xFF16A34A) else Color.Gray))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
                                 Text(
@@ -1243,7 +1270,7 @@ fun OffersTabContent(
 }
 
 // -------------------------------------------------------------
-// TAB 3: DRIVERS DIRECTORY (الليفرورات) - مع تعديل زر واتساب ليطابق المحلات
+// TAB 3: DRIVERS DIRECTORY (الليفرورات)
 // -------------------------------------------------------------
 @Composable
 fun DriversTabContent(
@@ -1364,7 +1391,6 @@ fun DriversTabContent(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // أزرار التواصل (واتساب واتصال) أصبحت متطابقة مع تصميم بطاقات العروض والمحلات
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1378,7 +1404,6 @@ fun DriversTabContent(
                             )
 
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                // زر واتساب المطابق تماماً لزر المحل (أخضر مع أيقونة ونص واتساب)
                                 Button(
                                     onClick = { onWhatsApp(driver.phone) },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
@@ -1388,7 +1413,7 @@ fun DriversTabContent(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Chat,
-                                        contentDescription = "مراسلة واتساب",
+                                        contentDescription = "واتساب",
                                         tint = Color.White,
                                         modifier = Modifier.size(14.dp)
                                     )
@@ -1396,7 +1421,6 @@ fun DriversTabContent(
                                     Text("واتساب", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
                                 }
 
-                                // زر الاتصال الهاتفي
                                 Button(
                                     onClick = { onDial(driver.phone) },
                                     colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
@@ -1406,7 +1430,7 @@ fun DriversTabContent(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Phone,
-                                        contentDescription = "اتصال هاتفي",
+                                        contentDescription = "اتصال",
                                         tint = Color.White,
                                         modifier = Modifier.size(14.dp)
                                     )
@@ -1532,7 +1556,7 @@ fun OfferItemCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(if (!isDriverOffer) ShopBluePrimary.copy(alpha = 0.12f) else DriverOrangePrimary.copy(alpha = 0.12f))
+                            .background(if (!isDriverOffer) ShopPurplePrimary.copy(alpha = 0.12f) else DriverOrangePrimary.copy(alpha = 0.12f))
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1547,7 +1571,7 @@ fun OfferItemCard(
                                 Icon(
                                     imageVector = Icons.Default.Store,
                                     contentDescription = null,
-                                    tint = ShopBluePrimary,
+                                    tint = ShopPurplePrimary,
                                     modifier = Modifier.size(15.dp)
                                 )
                             }
@@ -1556,7 +1580,7 @@ fun OfferItemCard(
                                 text = if (isDriverOffer) "عرض توصيل (ليفرور)" else "طلب توصيل (محل)",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.5.sp,
-                                color = if (!isDriverOffer) ShopBluePrimary else DriverOrangePrimary
+                                color = if (!isDriverOffer) ShopPurplePrimary else DriverOrangePrimary
                             )
                         }
                     }
@@ -1666,6 +1690,26 @@ fun OfferItemCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("اتصال", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+
+                    // زر الخريطة والموقع يظهر فقط لطلبات المحلات (طلب توصيل) وليس لعروض الليفرورات
+                    if (!isDriverOffer && ((offer.latitude != null && offer.longitude != null) || !offer.locationAddress.isNullOrBlank()) && onOpenMap != null) {
+                        Button(
+                            onClick = { onOpenMap(offer.latitude, offer.longitude, offer.title, offer.locationAddress) },
+                            colors = ButtonDefaults.buttonColors(containerColor = ShopPurplePrimary),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.height(38.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "موقع المحل",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text("الموقع", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
                     }
                 }
             }
