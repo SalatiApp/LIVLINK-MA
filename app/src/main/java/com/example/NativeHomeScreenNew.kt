@@ -11,8 +11,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -292,7 +294,7 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
         Text(
             text = "منصة ربط المحلات بالليفرورات",
             fontSize = 12.5.sp,
-            color = Color(0xFFF1F5F9),
+            color = Color.White,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -472,7 +474,7 @@ fun NativeHomeScreenNew(
                                     Icon(
                                         imageVector = Icons.Default.Store,
                                         contentDescription = "وضع صاحب المحل",
-                                        tint = if (!isDriver) Color.White else Color(0xFFCBD5E1),
+                                        tint = if (!isDriver) Color.White else Color.White,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -496,7 +498,7 @@ fun NativeHomeScreenNew(
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                         contentDescription = "وضع سائق التوصيل",
-                                        tint = if (isDriver) Color.White else Color(0xFFCBD5E1),
+                                        tint = if (isDriver) Color.White else Color.White,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -517,7 +519,7 @@ fun NativeHomeScreenNew(
                                     Icon(
                                         imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
                                         contentDescription = "تغيير الوضع",
-                                        tint = if (isDarkMode) Color(0xFFFBBF24) else Color(0xFFCBD5E1),
+                                        tint = Color.White,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -527,11 +529,11 @@ fun NativeHomeScreenNew(
                         Spacer(modifier = Modifier.height(11.dp))
 
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = activeColor.copy(alpha = 0.22f)),
+                            colors = CardDefaults.cardColors(containerColor = activeColor),
                             shape = RoundedCornerShape(9.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, activeColor.copy(alpha = 0.6f), RoundedCornerShape(9.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(9.dp))
                                 .clickable {
                                     val newRole = if (isDriver) "صاحب محل" else "ليفرور"
                                     onRoleChange(newRole)
@@ -548,14 +550,14 @@ fun NativeHomeScreenNew(
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                         contentDescription = null,
-                                        tint = activeColor,
+                                        tint = Color.White,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Default.Store,
                                         contentDescription = null,
-                                        tint = activeColor,
+                                        tint = Color.White,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -598,7 +600,7 @@ fun NativeHomeScreenNew(
                                         Icon(
                                             imageVector = Icons.Default.LocationOn,
                                             contentDescription = null,
-                                            tint = activeColor,
+                                            tint = Color.White,
                                             modifier = Modifier.size(15.dp)
                                         )
                                         Spacer(modifier = Modifier.width(5.dp))
@@ -625,7 +627,7 @@ fun NativeHomeScreenNew(
                                 ) {
                                     MOROCCAN_CITIES.forEach { city ->
                                         DropdownMenuItem(
-                                            text = { Text(city, fontSize = 13.sp, fontWeight = FontWeight.Medium) },
+                                            text = { Text(city, fontSize = 13.sp, fontWeight = FontWeight.Bold) },
                                             onClick = {
                                                 selectedCity = city
                                                 selectedDistrict = "اختر الحي"
@@ -641,7 +643,7 @@ fun NativeHomeScreenNew(
                                     .weight(1f)
                                     .clip(RoundedCornerShape(9.dp))
                                     .background(NavySecondary)
-                                    .border(1.dp, activeColor.copy(alpha = 0.5f), RoundedCornerShape(9.dp))
+                                    .border(1.dp, Color(0xFF334155), RoundedCornerShape(9.dp))
                                     .clickable { districtDropdownExpanded = true }
                                     .padding(horizontal = 10.dp, vertical = 9.dp)
                             ) {
@@ -657,7 +659,7 @@ fun NativeHomeScreenNew(
                                         Icon(
                                             imageVector = Icons.Default.Map,
                                             contentDescription = null,
-                                            tint = activeColor,
+                                            tint = Color.White,
                                             modifier = Modifier.size(15.dp)
                                         )
                                         Spacer(modifier = Modifier.width(5.dp))
@@ -685,7 +687,7 @@ fun NativeHomeScreenNew(
                                     val availableDistricts = CITY_DISTRICTS_MAP[selectedCity] ?: listOf("اختر الحي", "جميع الأحياء")
                                     availableDistricts.forEach { district ->
                                         DropdownMenuItem(
-                                            text = { Text(district, fontSize = 13.sp, fontWeight = FontWeight.Medium) },
+                                            text = { Text(district, fontSize = 13.sp, fontWeight = FontWeight.Bold) },
                                             onClick = {
                                                 selectedDistrict = district
                                                 districtDropdownExpanded = false
@@ -726,14 +728,14 @@ fun NativeHomeScreenNew(
                                         Icon(
                                             painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                             contentDescription = label,
-                                            tint = if (isSelected) activeColor else Color(0xFFCBD5E1),
+                                            tint = Color.White,
                                             modifier = Modifier.size(22.dp)
                                         )
                                     } else {
                                         Icon(
                                             imageVector = icon,
                                             contentDescription = label,
-                                            tint = if (isSelected) activeColor else Color(0xFFCBD5E1),
+                                            tint = Color.White,
                                             modifier = Modifier.size(if (index == 2) 26.dp else 22.dp)
                                         )
                                     }
@@ -742,16 +744,16 @@ fun NativeHomeScreenNew(
                                     Text(
                                         text = label,
                                         fontSize = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) activeColor else Color(0xFFCBD5E1)
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
                                     )
                                 },
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = activeColor,
-                                    selectedTextColor = activeColor,
-                                    unselectedIconColor = Color(0xFFCBD5E1),
-                                    unselectedTextColor = Color(0xFFCBD5E1),
-                                    indicatorColor = activeColor.copy(alpha = 0.18f)
+                                    selectedIconColor = Color.White,
+                                    selectedTextColor = Color.White,
+                                    unselectedIconColor = Color.White,
+                                    unselectedTextColor = Color.White,
+                                    indicatorColor = activeColor
                                 )
                             )
                         }
@@ -888,13 +890,13 @@ fun NativeHomeScreenNew(
                 selectedOfferForDetails?.let { offer ->
                     AlertDialog(
                         onDismissRequest = { selectedOfferForDetails = null },
-                        title = { Text(text = offer.title, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+                        title = { Text(text = offer.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White) },
                         text = {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(text = "نوع الإعلان: ${offer.roleType}", fontWeight = FontWeight.Bold, color = activeColor, fontSize = 13.sp)
-                                Text(text = "المدينة والحي: ${offer.city} • ${offer.district}", fontSize = 12.5.sp)
-                                Text(text = "تفاصيل الإعلان: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp)
-                                Text(text = "رقم الهاتف: ${offer.phone}", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(text = "المدينة والحي: ${offer.city} • ${offer.district}", fontSize = 12.5.sp, color = Color.White)
+                                Text(text = "تفاصيل الإعلان: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp, color = Color.White)
+                                Text(text = "رقم الهاتف: ${offer.phone}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
                             }
                         },
                         confirmButton = {
@@ -933,24 +935,25 @@ fun NativeHomeScreenNew(
                                     selectedOfferForDetails = null
                                 }
                             ) {
-                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("اتصال")
+                                Text("اتصال", color = Color.White, fontWeight = FontWeight.Bold)
                             }
-                        }
+                        },
+                        containerColor = NavyPrimary
                     )
                 }
 
                 selectedDriverForDetails?.let { driver ->
                     AlertDialog(
                         onDismissRequest = { selectedDriverForDetails = null },
-                        title = { Text(text = driver.name, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+                        title = { Text(text = driver.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White) },
                         text = {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(text = "المدينة: ${driver.city}", fontSize = 13.sp)
-                                Text(text = "وسيلة النقل: ${driver.vehicle}", fontSize = 13.sp)
-                                Text(text = "سنوات الخبرة: ${driver.experience}", fontSize = 13.sp)
-                                Text(text = "التوصيلات المنجزة: ${driver.completedTrips} توصيلة", fontSize = 13.sp, color = activeColor, fontWeight = FontWeight.Bold)
+                                Text(text = "المدينة: ${driver.city}", fontSize = 13.sp, color = Color.White)
+                                Text(text = "وسيلة النقل: ${driver.vehicle}", fontSize = 13.sp, color = Color.White)
+                                Text(text = "سنوات الخبرة: ${driver.experience}", fontSize = 13.sp, color = Color.White)
+                                Text(text = "التوصيلات المنجزة: ${driver.completedTrips} توصيلة", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
                             }
                         },
                         confirmButton = {
@@ -973,11 +976,12 @@ fun NativeHomeScreenNew(
                                     selectedDriverForDetails = null
                                 }
                             ) {
-                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("اتصال مباشر")
+                                Text("اتصال مباشر", color = Color.White, fontWeight = FontWeight.Bold)
                             }
-                        }
+                        },
+                        containerColor = NavyPrimary
                     )
                 }
             }
@@ -992,13 +996,13 @@ fun AddScreen(
     initialCity: String = "جميع مدن المغرب",
     onAddSubmit: (title: String, city: String, phone: String, details: String, type: String, lat: Double?, lng: Double?, address: String?) -> Unit
 ) {
-    val context = LocalContext.current // تم تعريف السياق بشكل صحيح لمنع خطأ البناء
+    val context = LocalContext.current
     var selectedType by remember { mutableStateOf(initialType) }
     var titleText by remember { mutableStateOf("") }
     var cityText by remember { mutableStateOf(if (initialCity == "جميع مدن المغرب") "الدار البيضاء" else initialCity) }
     var phoneText by remember { mutableStateOf("") }
     var detailsText by remember { mutableStateOf("") }
-    var cityDropdownExpanded by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -1007,6 +1011,7 @@ fun AddScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(16.dp)
         ) {
             Row(
@@ -1031,57 +1036,81 @@ fun AddScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                colors = CardDefaults.cardColors(containerColor = NavySecondary),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(text = "نوع الإعلان المراد نشره:", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = "نوع الإعلان المراد نشره:", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = { selectedType = "طلب توصيل" },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedType == "طلب توصيل") ShopBlueDarkPrimary else Color(0xFFE2E8F0)
+                                containerColor = if (selectedType == "طلب توصيل") ShopBlueDarkPrimary else Color(0xFF334155)
                             ),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("طلب توصيل (محل)", color = if (selectedType == "طلب توصيل") Color.White else Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("طلب توصيل (محل)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Button(
                             onClick = { selectedType = "عرض توصيل" },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedType == "عرض توصيل") DriverOrangePrimary else Color(0xFFE2E8F0)
+                                containerColor = if (selectedType == "عرض توصيل") DriverOrangePrimary else Color(0xFF334155)
                             ),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("عرض توصيل (ليفرور)", color = if (selectedType == "عرض توصيل") Color.White else Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("عرض توصيل (ليفرور)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
                     OutlinedTextField(
                         value = titleText,
                         onValueChange = { titleText = it },
-                        label = { Text("اسم المحل ونوع السلع *") },
+                        label = { Text("اسم المحل ونوع السلع *", color = Color.White) },
                         singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.White
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = phoneText,
                         onValueChange = { phoneText = it },
-                        label = { Text("رقم الهاتف أو الواتساب للتواصل المباشر *") },
+                        label = { Text("رقم الهاتف أو الواتساب للتواصل المباشر *", color = Color.White) },
                         singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.White
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
                         value = detailsText,
                         onValueChange = { detailsText = it },
-                        label = { Text("تفاصيل إضافية (الأحياء، شروط التوصيل، التوقيت)") },
+                        label = { Text("تفاصيل إضافية (الأحياء، شروط التوصيل، التوقيت)", color = Color.White) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.White
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(100.dp)
@@ -1090,8 +1119,8 @@ fun AddScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, ShopBlueDarkPrimary.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                            .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
+                        colors = CardDefaults.cardColors(containerColor = NavyPrimary),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Column(
@@ -1099,7 +1128,7 @@ fun AddScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = ShopBlueAccent, modifier = Modifier.size(20.dp))
+                                Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "موقع المحل على الخريطة (اختياري لصاحب المحل)",
@@ -1111,7 +1140,7 @@ fun AddScreen(
                             Text(
                                 text = "يسمح بتحديد إحداثيات موقع محلك الجغرافي لتسهيل وصول الليفرورات إليك عبر الخريطة.",
                                 fontSize = 12.sp,
-                                color = Color(0xFFCBD5E1),
+                                color = Color.White,
                                 lineHeight = 17.sp
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1269,7 +1298,7 @@ fun HomeTabContent(
                                 Text(
                                     text = if (isDriverAvailable) "المحلات في $selectedCity يمكنها الاتصال بك الآن" else "إعلاناتك متوقفة مؤقتاً",
                                     fontSize = 12.5.sp,
-                                    color = Color(0xFFE2E8F0)
+                                    color = Color.White
                                 )
                             }
                         }
@@ -1292,15 +1321,15 @@ fun HomeTabContent(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onNavigateToOffers() }
-                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(imageVector = Icons.Default.ListAlt, contentDescription = null, tint = activeColor, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.ListAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = if (isDriver) "طلبيات المحلات" else "سوق العروض", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = if (isDriver) "طلبيات المحلات" else "سوق العروض", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
                     }
                 }
 
@@ -1308,15 +1337,15 @@ fun HomeTabContent(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onNavigateToAdd() }
-                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(imageVector = Icons.Default.AddCircle, contentDescription = null, tint = activeColor, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.AddCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = if (isDriver) "نشر عرض" else "طلب ليفرور", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = if (isDriver) "نشر عرض" else "طلب ليفرور", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
                     }
                 }
 
@@ -1324,15 +1353,15 @@ fun HomeTabContent(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onNavigateToDrivers() }
-                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = Color(0xFF16A34A), modifier = Modifier.size(22.dp))
+                        Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = "الليفرورات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = "الليفرورات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
                     }
                 }
             }
@@ -1344,10 +1373,10 @@ fun HomeTabContent(
                     text = if (isDriver) "أحدث طلبات التوصيل ($selectedCity - $selectedDistrict):" else "أحدث الإعلانات ($selectedCity):",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.5.sp,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = Color.White
                 )
                 TextButton(onClick = onNavigateToOffers) {
-                    Text(text = "عرض الكل", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = activeColor)
+                    Text(text = "عرض الكل", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }
@@ -1357,17 +1386,17 @@ fun HomeTabContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(imageVector = Icons.Default.Inbox, contentDescription = null, tint = activeColor, modifier = Modifier.size(40.dp))
+                        Icon(imageVector = Icons.Default.Inbox, contentDescription = null, tint = Color.White, modifier = Modifier.size(40.dp))
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "لا توجد إعلانات حالياً في $selectedCity ($selectedDistrict)", fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = "لا توجد إعلانات حالياً في $selectedCity ($selectedDistrict)", fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = "كن أول من يضيف إعلاناً في منطقتك عبر زر الإضافة أسفله", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                        Text(text = "كن أول من يضيف إعلاناً في منطقتك عبر زر الإضافة أسفله", fontSize = 12.sp, color = Color.White, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -1416,8 +1445,8 @@ fun OffersTabContent(
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    Text(text = "سوق العروض والطلبيات", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onBackground)
-                    Text(text = "المدينة: $selectedCity (${displayOffers.size} متاح)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = "سوق العروض والطلبيات", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
+                    Text(text = "المدينة: $selectedCity (${displayOffers.size} متاح)", fontSize = 12.sp, color = Color.White)
                 }
                 Button(
                     onClick = onNavigateToAdd,
@@ -1425,7 +1454,7 @@ fun OffersTabContent(
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("إضافة", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
@@ -1439,10 +1468,12 @@ fun OffersTabContent(
                     ElevatedFilterChip(
                         selected = isSelected,
                         onClick = { filterType = chip },
-                        label = { Text(chip, fontSize = 12.sp, fontWeight = FontWeight.Bold) },
+                        label = { Text(chip, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White) },
                         colors = FilterChipDefaults.elevatedFilterChipColors(
                             selectedContainerColor = activeColor,
-                            selectedLabelColor = Color.White
+                            selectedLabelColor = Color.White,
+                            containerColor = NavySecondary,
+                            labelColor = Color.White
                         )
                     )
                 }
@@ -1454,11 +1485,11 @@ fun OffersTabContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = NavySecondary)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "لا توجد إعلانات مطابقة حالياً", fontSize = 13.5.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = "لا توجد إعلانات مطابقة حالياً", fontSize = 13.5.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }
@@ -1497,12 +1528,12 @@ fun DriversTabContent(
                 text = "دليل السائقين المعتمدين (الليفرورات)",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color.White
             )
             Text(
                 text = "تواصل مباشرة مع الليفرور المتاح في $selectedCity بدون أي وسيط",
                 fontSize = 12.5.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.White
             )
         }
 
@@ -1511,8 +1542,8 @@ fun DriversTabContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = NavySecondary)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -1520,13 +1551,13 @@ fun DriversTabContent(
                             textAlign = TextAlign.Center,
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = Color.White
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "عند نشر عروض التوصيل ستظهر هنا تلقائياً",
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -1538,8 +1569,8 @@ fun DriversTabContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onSelectDriver(driver) }
-                        .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -1558,13 +1589,13 @@ fun DriversTabContent(
                                     modifier = Modifier
                                         .size(44.dp)
                                         .clip(CircleShape)
-                                        .background(if (driver.isAvailable) Color(0xFFDCFCE7) else Color(0xFFF1F5F9)),
+                                        .background(if (driver.isAvailable) Color(0xFF064E3B) else Color(0xFF334155)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.DeliveryDining,
                                         contentDescription = null,
-                                        tint = if (driver.isAvailable) Color(0xFF16A34A) else Color.Gray,
+                                        tint = if (driver.isAvailable) Color(0xFF4ADE80) else Color.White,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
@@ -1575,32 +1606,32 @@ fun DriversTabContent(
                                             text = driver.name,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.5.sp,
-                                            color = MaterialTheme.colorScheme.onSurface
+                                            color = Color.White
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(4.dp))
-                                                .background(if (driver.isAvailable) Color(0xFFDCFCE7) else Color(0xFFE2E8F0))
+                                                .background(if (driver.isAvailable) Color(0xFF064E3B) else Color(0xFF334155))
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
                                                 text = if (driver.isAvailable) "متاح" else "مشغول",
                                                 fontSize = 11.5.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = if (driver.isAvailable) Color(0xFF16A34A) else Color.Gray
+                                                color = if (driver.isAvailable) Color(0xFF4ADE80) else Color.White
                                             )
                                         }
                                     }
                                     Text(
                                         text = "${driver.city} • ${driver.vehicle} (${driver.experience})",
                                         fontSize = 12.5.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = Color.White
                                     )
                                     Text(
                                         text = "${driver.completedTrips} توصيلة ناجحة",
                                         fontSize = 12.sp,
-                                        color = activeColor,
+                                        color = Color.White,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -1618,7 +1649,7 @@ fun DriversTabContent(
                                 text = "الهاتف: ${driver.phone}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.5.sp,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = Color.White
                             )
 
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1636,7 +1667,7 @@ fun DriversTabContent(
 
                                 Button(
                                     onClick = { onDial(driver.phone) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                                    colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary),
                                     shape = RoundedCornerShape(8.dp),
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                     modifier = Modifier.height(38.dp)
@@ -1675,8 +1706,8 @@ fun ProfileTabContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(containerColor = NavySecondary),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
@@ -1687,35 +1718,36 @@ fun ProfileTabContent(
                         modifier = Modifier
                             .size(68.dp)
                             .clip(CircleShape)
-                            .background(activeColor.copy(alpha = 0.15f))
-                            .border(2.dp, activeColor, CircleShape),
+                            .background(activeColor.copy(alpha = 0.3f))
+                            .border(2.dp, Color.White, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (isDriver) Icons.Default.DeliveryDining else Icons.Default.Store,
                             contentDescription = null,
-                            tint = activeColor,
+                            tint = Color.White,
                             modifier = Modifier.size(36.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Color.White)
                     Text(
                         text = if (isDriver) "حساب سائق توصيل • $selectedCity" else "حساب صاحب محل تجاري • $selectedCity",
                         fontSize = 12.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = onSwitchRole,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = activeColor),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                            border = BorderStroke(1.dp, Color.White),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.height(44.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(imageVector = Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = if (isDriver) "التبديل لوضع المحل" else "التبديل لوضع الليفرور", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
+                            Text(text = if (isDriver) "التبديل لوضع المحل" else "التبديل لوضع الليفرور", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                         Button(
                             onClick = onOpenEditDialog,
@@ -1723,7 +1755,7 @@ fun ProfileTabContent(
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.height(44.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("تعديل", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
@@ -1736,8 +1768,8 @@ fun ProfileTabContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(containerColor = NavySecondary),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
@@ -1748,18 +1780,18 @@ fun ProfileTabContent(
                         text = "إعدادات ومعلومات الحساب:",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.5.sp,
-                        color = activeColor
+                        color = Color.White
                     )
 
-                    Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    Divider(color = Color.White.copy(alpha = 0.3f))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "الاسم المعتمد في المنصة:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = "الاسم المعتمد في المنصة:", fontSize = 13.sp, color = Color.White)
+                        Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
                     }
 
                     Row(
@@ -1767,8 +1799,8 @@ fun ProfileTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "رقم الهاتف للتواصل المباشر:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(text = userPhone, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = "رقم الهاتف للتواصل المباشر:", fontSize = 13.sp, color = Color.White)
+                        Text(text = userPhone, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
                     }
 
                     Row(
@@ -1776,8 +1808,8 @@ fun ProfileTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "المدينة المحددة حالياً:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(text = selectedCity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onSurface)
+                        Text(text = "المدينة المحددة حالياً:", fontSize = 13.sp, color = Color.White)
+                        Text(text = selectedCity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
                     }
 
                     Row(
@@ -1785,8 +1817,8 @@ fun ProfileTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "نموذج الاستخدام المعتمد:", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(text = "مجاني 100% بدون عمولات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFF16A34A))
+                        Text(text = "نموذج الاستخدام المعتمد:", fontSize = 13.sp, color = Color.White)
+                        Text(text = "مجاني 100% بدون عمولات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFF4ADE80))
                     }
                 }
             }
@@ -1809,8 +1841,8 @@ fun OfferItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(12.dp)),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(containerColor = NavySecondary),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -1824,21 +1856,21 @@ fun OfferItemCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(if (!isDriverOffer) ShopBlueDarkPrimary.copy(alpha = 0.12f) else DriverOrangePrimary.copy(alpha = 0.12f))
+                            .background(if (!isDriverOffer) ShopBlueDarkPrimary else DriverOrangePrimary)
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (isDriverOffer) {
-                                Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = DriverOrangePrimary, modifier = Modifier.size(15.dp))
+                                Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
                             } else {
-                                Icon(imageVector = Icons.Default.Store, contentDescription = null, tint = ShopBlueDarkPrimary, modifier = Modifier.size(15.dp))
+                                Icon(imageVector = Icons.Default.Store, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
                             }
                             Spacer(modifier = Modifier.width(5.dp))
                             Text(
                                 text = if (isDriverOffer) "عرض توصيل (ليفرور)" else "طلب توصيل (محل)",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
-                                color = if (!isDriverOffer) ShopBlueDarkPrimary else DriverOrangePrimary
+                                color = Color.White
                             )
                         }
                     }
@@ -1846,15 +1878,15 @@ fun OfferItemCard(
                     Text(
                         text = "${offer.city} • ${offer.district}",
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                 }
 
                 Text(
                     text = offer.timeAgo,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.White
                 )
             }
 
@@ -1864,7 +1896,7 @@ fun OfferItemCard(
                 text = offer.title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.5.sp,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color.White
             )
 
             if (isDriverOffer && offer.vehicleType.isNotBlank()) {
@@ -1873,16 +1905,16 @@ fun OfferItemCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(DriverOrangePrimary.copy(alpha = 0.08f))
+                        .background(DriverOrangePrimary.copy(alpha = 0.3f))
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
-                    Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = DriverOrangePrimary, modifier = Modifier.size(14.dp))
+                    Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = "وسيلة النقل: ${offer.vehicleType}",
                         fontSize = 12.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = DriverOrangePrimary
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                 }
             }
@@ -1892,7 +1924,7 @@ fun OfferItemCard(
             Text(
                 text = offer.details,
                 fontSize = 13.5.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color.White,
                 lineHeight = 19.sp
             )
 
@@ -1907,7 +1939,7 @@ fun OfferItemCard(
                     text = "الهاتف: ${offer.phone}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.5.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1925,7 +1957,7 @@ fun OfferItemCard(
 
                     Button(
                         onClick = onDial,
-                        colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                        colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary),
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                         modifier = Modifier.height(38.dp)
