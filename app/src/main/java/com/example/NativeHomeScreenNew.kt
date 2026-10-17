@@ -318,6 +318,12 @@ fun NativeHomeScreenNew(
     val isDriver = currentRole == "ليفرور"
     val activeColor = if (isDriver) DriverOrangePrimary else ShopBlueDarkPrimary
 
+    val screenBg = if (isDarkMode) Color(0xFF0F172A) else Color(0xFFF8FAFC)
+    val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
+    val textColor = if (isDarkMode) Color.White else Color(0xFF0F172A)
+    val subTextColor = if (isDarkMode) Color.White.copy(alpha = 0.8f) else Color(0xFF64748B)
+    val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         var currentTab by remember { mutableIntStateOf(0) }
         var selectedCity by remember { mutableStateOf("جميع مدن المغرب") }
@@ -429,14 +435,13 @@ fun NativeHomeScreenNew(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // الجهة اليمنى: مربع LV المؤقت بحجم أكبر متناسق ومكحوز نحو اسم LIVLINK
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(48.dp) // تكبير حجم أيقونة/مربع التطبيق
+                                        .size(48.dp)
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(activeColor),
                                     contentAlignment = Alignment.Center
@@ -450,13 +455,11 @@ fun NativeHomeScreenNew(
                                 }
                             }
 
-                            // الوسط: اسم التطبيق والشعار العربي
                             AmazonStyleLivlinkHeader(activeColor = activeColor)
 
-                            // الجهة اليسرى: الأيقونات الثلاث بمسافات متباعدة ومريحة
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp), // زيادة المسافة بين الأيقونات الثلاث
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
                                 modifier = Modifier.wrapContentSize()
                             ) {
                                 Box(
@@ -769,7 +772,7 @@ fun NativeHomeScreenNew(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(screenBg)
             ) {
                 val filteredOffers = offersList.filter { offer ->
                     val matchesCity = (selectedCity == "جميع مدن المغرب" || offer.city == selectedCity)
@@ -780,6 +783,7 @@ fun NativeHomeScreenNew(
                 when (currentTab) {
                     0 -> HomeTabContent(
                         isDriver = isDriver,
+                        isDarkMode = isDarkMode,
                         activeColor = activeColor,
                         selectedCity = selectedCity,
                         selectedDistrict = selectedDistrict,
@@ -797,6 +801,7 @@ fun NativeHomeScreenNew(
 
                     1 -> OffersTabContent(
                         isDriver = isDriver,
+                        isDarkMode = isDarkMode,
                         activeColor = activeColor,
                         selectedCity = selectedCity,
                         offers = filteredOffers,
@@ -809,6 +814,7 @@ fun NativeHomeScreenNew(
 
                     2 -> AddScreen(
                         isDriver = isDriver,
+                        isDarkMode = isDarkMode,
                         onDismiss = { currentTab = 1 },
                         initialCity = selectedCity,
                         onAddSubmit = { title, city, phone, details, type, lat, lng, address ->
@@ -867,6 +873,7 @@ fun NativeHomeScreenNew(
 
                     3 -> DriversTabContent(
                         isDriver = isDriver,
+                        isDarkMode = isDarkMode,
                         activeColor = activeColor,
                         selectedCity = selectedCity,
                         drivers = driversList.filter { selectedCity == "جميع مدن المغرب" || it.city == selectedCity },
@@ -877,6 +884,7 @@ fun NativeHomeScreenNew(
 
                     4 -> ProfileTabContent(
                         isDriver = isDriver,
+                        isDarkMode = isDarkMode,
                         activeColor = activeColor,
                         selectedCity = selectedCity,
                         userName = profileName,
@@ -892,15 +900,17 @@ fun NativeHomeScreenNew(
                 }
 
                 selectedOfferForDetails?.let { offer ->
+                    val dialogBg = if (isDarkMode) NavyPrimary else Color(0xFFFFFFFF)
+                    val dialogText = if (isDarkMode) Color.White else Color(0xFF0F172A)
                     AlertDialog(
                         onDismissRequest = { selectedOfferForDetails = null },
-                        title = { Text(text = offer.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White) },
+                        title = { Text(text = offer.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = dialogText) },
                         text = {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(text = "نوع الإعلان: ${offer.roleType}", fontWeight = FontWeight.Bold, color = activeColor, fontSize = 13.sp)
-                                Text(text = "المدينة والحي: ${offer.city} • ${offer.district}", fontSize = 12.5.sp, color = Color.White)
-                                Text(text = "تفاصيل الإعلان: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp, color = Color.White)
-                                Text(text = "رقم الهاتف: ${offer.phone}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+                                Text(text = "المدينة والحي: ${offer.city} • ${offer.district}", fontSize = 12.5.sp, color = dialogText)
+                                Text(text = "تفاصيل الإعلان: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp, color = dialogText)
+                                Text(text = "رقم الهاتف: ${offer.phone}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = dialogText)
                             }
                         },
                         confirmButton = {
@@ -937,27 +947,31 @@ fun NativeHomeScreenNew(
                                 onClick = {
                                     dialPhone(offer.phone)
                                     selectedOfferForDetails = null
-                                }
+                                },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = dialogText),
+                                border = BorderStroke(1.dp, borderColor)
                             ) {
-                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
+                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp), tint = dialogText)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("اتصال", color = Color.White, fontWeight = FontWeight.Bold)
+                                Text("اتصال", color = dialogText, fontWeight = FontWeight.Bold)
                             }
                         },
-                        containerColor = NavyPrimary
+                        containerColor = dialogBg
                     )
                 }
 
                 selectedDriverForDetails?.let { driver ->
+                    val dialogBg = if (isDarkMode) NavyPrimary else Color(0xFFFFFFFF)
+                    val dialogText = if (isDarkMode) Color.White else Color(0xFF0F172A)
                     AlertDialog(
                         onDismissRequest = { selectedDriverForDetails = null },
-                        title = { Text(text = driver.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White) },
+                        title = { Text(text = driver.name, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = dialogText) },
                         text = {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(text = "المدينة: ${driver.city}", fontSize = 13.sp, color = Color.White)
-                                Text(text = "وسيلة النقل: ${driver.vehicle}", fontSize = 13.sp, color = Color.White)
-                                Text(text = "سنوات الخبرة: ${driver.experience}", fontSize = 13.sp, color = Color.White)
-                                Text(text = "التوصيلات المنجزة: ${driver.completedTrips} توصيلة", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                Text(text = "المدينة: ${driver.city}", fontSize = 13.sp, color = dialogText)
+                                Text(text = "وسيلة النقل: ${driver.vehicle}", fontSize = 13.sp, color = dialogText)
+                                Text(text = "سنوات الخبرة: ${driver.experience}", fontSize = 13.sp, color = dialogText)
+                                Text(text = "التوصيلات المنجزة: ${driver.completedTrips} توصيلة", fontSize = 13.sp, color = dialogText, fontWeight = FontWeight.Bold)
                             }
                         },
                         confirmButton = {
@@ -978,14 +992,16 @@ fun NativeHomeScreenNew(
                                 onClick = {
                                     dialPhone(driver.phone)
                                     selectedDriverForDetails = null
-                                }
+                                },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = dialogText),
+                                border = BorderStroke(1.dp, borderColor)
                             ) {
-                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
+                                Icon(Icons.Default.Phone, contentDescription = null, modifier = Modifier.size(16.dp), tint = dialogText)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("اتصال مباشر", color = Color.White, fontWeight = FontWeight.Bold)
+                                Text("اتصال مباشر", color = dialogText, fontWeight = FontWeight.Bold)
                             }
                         },
-                        containerColor = NavyPrimary
+                        containerColor = dialogBg
                     )
                 }
             }
@@ -996,6 +1012,7 @@ fun NativeHomeScreenNew(
 @Composable
 fun AddScreen(
     isDriver: Boolean,
+    isDarkMode: Boolean,
     onDismiss: () -> Unit,
     initialCity: String = "جميع مدن المغرب",
     onAddSubmit: (title: String, city: String, phone: String, details: String, type: String, lat: Double?, lng: Double?, address: String?) -> Unit
@@ -1008,9 +1025,15 @@ fun AddScreen(
     var detailsText by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
+    val screenBg = if (isDarkMode) NavyPrimary else Color(0xFFF8FAFC)
+    val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
+    val textColor = if (isDarkMode) Color.White else Color(0xFF0F172A)
+    val subTextColor = if (isDarkMode) Color.White.copy(alpha = 0.8f) else Color(0xFF64748B)
+    val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFCBD5E1)
+
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = NavyPrimary
+        color = screenBg
     ) {
         Column(
             modifier = Modifier
@@ -1029,60 +1052,62 @@ fun AddScreen(
                     text = "إضافة $selectedType جديد",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = Color.White
+                    color = textColor
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "إغلاق", tint = Color.White)
+                    Icon(imageVector = Icons.Default.Close, contentDescription = "إغلاق", tint = textColor)
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, borderColor, RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(text = "نوع الإعلان المراد نشره:", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
+                    Text(text = "نوع الإعلان المراد نشره:", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = { selectedType = "طلب توصيل" },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedType == "طلب توصيل") ShopBlueDarkPrimary else Color(0xFF334155)
+                                containerColor = if (selectedType == "طلب توصيل") ShopBlueDarkPrimary else (if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0))
                             ),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("طلب توصيل (محل)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("طلب توصيل (محل)", color = if (selectedType == "طلب توصيل" || isDarkMode) Color.White else Color(0xFF0F172A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Button(
                             onClick = { selectedType = "عرض توصيل" },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedType == "عرض توصيل") DriverOrangePrimary else Color(0xFF334155)
+                                containerColor = if (selectedType == "عرض توصيل") DriverOrangePrimary else (if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0))
                             ),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("عرض توصيل (ليفرور)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("عرض توصيل (ليفرور)", color = if (selectedType == "عرض توصيل" || isDarkMode) Color.White else Color(0xFF0F172A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
                     OutlinedTextField(
                         value = titleText,
                         onValueChange = { titleText = it },
-                        label = { Text("اسم المحل ونوع السلع *", color = Color.White) },
+                        label = { Text("اسم المحل ونوع السلع *", color = subTextColor) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color.White,
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                            focusedLabelColor = Color.White,
-                            unfocusedLabelColor = Color.White
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = if (isDriver) DriverOrangePrimary else ShopBlueDarkPrimary,
+                            unfocusedBorderColor = borderColor,
+                            focusedLabelColor = if (isDriver) DriverOrangePrimary else ShopBlueDarkPrimary,
+                            unfocusedLabelColor = subTextColor
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1090,15 +1115,15 @@ fun AddScreen(
                     OutlinedTextField(
                         value = phoneText,
                         onValueChange = { phoneText = it },
-                        label = { Text("رقم الهاتف أو الواتساب للتواصل المباشر *", color = Color.White) },
+                        label = { Text("رقم الهاتف أو الواتساب للتواصل المباشر *", color = subTextColor) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color.White,
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                            focusedLabelColor = Color.White,
-                            unfocusedLabelColor = Color.White
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = if (isDriver) DriverOrangePrimary else ShopBlueDarkPrimary,
+                            unfocusedBorderColor = borderColor,
+                            focusedLabelColor = if (isDriver) DriverOrangePrimary else ShopBlueDarkPrimary,
+                            unfocusedLabelColor = subTextColor
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1106,14 +1131,14 @@ fun AddScreen(
                     OutlinedTextField(
                         value = detailsText,
                         onValueChange = { detailsText = it },
-                        label = { Text("تفاصيل إضافية (الأحياء، شروط التوصيل، التوقيت)", color = Color.White) },
+                        label = { Text("تفاصيل إضافية (الأحياء، شروط التوصيل، التوقيت)", color = subTextColor) },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = Color.White,
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                            focusedLabelColor = Color.White,
-                            unfocusedLabelColor = Color.White
+                            focusedTextColor = textColor,
+                            unfocusedTextColor = textColor,
+                            focusedBorderColor = if (isDriver) DriverOrangePrimary else ShopBlueDarkPrimary,
+                            unfocusedBorderColor = borderColor,
+                            focusedLabelColor = if (isDriver) DriverOrangePrimary else ShopBlueDarkPrimary,
+                            unfocusedLabelColor = subTextColor
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1123,8 +1148,8 @@ fun AddScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
-                        colors = CardDefaults.cardColors(containerColor = NavyPrimary),
+                            .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                        colors = CardDefaults.cardColors(containerColor = if (isDarkMode) NavyPrimary else Color(0xFFF1F5F9)),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Column(
@@ -1132,19 +1157,19 @@ fun AddScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = textColor, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "موقع المحل على الخريطة (اختياري لصاحب المحل)",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.5.sp,
-                                    color = Color.White
+                                    color = textColor
                                 )
                             }
                             Text(
                                 text = "يسمح بتحديد إحداثيات موقع محلك الجغرافي لتسهيل وصول الليفرورات إليك عبر الخريطة.",
                                 fontSize = 12.sp,
-                                color = Color.White,
+                                color = subTextColor,
                                 lineHeight = 17.sp
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1160,9 +1185,11 @@ fun AddScreen(
 
                                 OutlinedButton(
                                     onClick = { Toast.makeText(context, "إدخال يدوي للموقع", Toast.LENGTH_SHORT).show() },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = textColor),
+                                    border = BorderStroke(1.dp, borderColor)
                                 ) {
-                                    Text("إدخال يدوي", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    Text("إدخال يدوي", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textColor)
                                 }
                             }
                         }
@@ -1195,6 +1222,7 @@ fun AddScreen(
 @Composable
 fun HomeTabContent(
     isDriver: Boolean,
+    isDarkMode: Boolean,
     activeColor: Color,
     selectedCity: String,
     selectedDistrict: String,
@@ -1209,6 +1237,11 @@ fun HomeTabContent(
     onWhatsApp: (String) -> Unit,
     onOpenMap: (Double?, Double?, String, String?) -> Unit
 ) {
+    val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
+    val textColor = if (isDarkMode) Color.White else Color(0xFF0F172A)
+    val subTextColor = if (isDarkMode) Color.White.copy(alpha = 0.8f) else Color(0xFF64748B)
+    val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
@@ -1325,15 +1358,15 @@ fun HomeTabContent(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onNavigateToOffers() }
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                        .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(imageVector = Icons.Default.ListAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.ListAlt, contentDescription = null, tint = textColor, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = if (isDriver) "طلبيات المحلات" else "سوق العروض", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
+                        Text(text = if (isDriver) "طلبيات المحلات" else "سوق العروض", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
                     }
                 }
 
@@ -1341,15 +1374,15 @@ fun HomeTabContent(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onNavigateToAdd() }
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                        .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(imageVector = Icons.Default.AddCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                        Icon(imageVector = Icons.Default.AddCircle, contentDescription = null, tint = textColor, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = if (isDriver) "نشر عرض" else "طلب ليفرور", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
+                        Text(text = if (isDriver) "نشر عرض" else "طلب ليفرور", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
                     }
                 }
 
@@ -1357,15 +1390,15 @@ fun HomeTabContent(
                     modifier = Modifier
                         .weight(1f)
                         .clickable { onNavigateToDrivers() }
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                        .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                        Icon(painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box), contentDescription = null, tint = textColor, modifier = Modifier.size(22.dp))
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text(text = "الليفرورات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
+                        Text(text = "الليفرورات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
                     }
                 }
             }
@@ -1377,10 +1410,10 @@ fun HomeTabContent(
                     text = if (isDriver) "أحدث طلبات التوصيل ($selectedCity - $selectedDistrict):" else "أحدث الإعلانات ($selectedCity):",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.5.sp,
-                    color = Color.White
+                    color = textColor
                 )
                 TextButton(onClick = onNavigateToOffers) {
-                    Text(text = "عرض الكل", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(text = "عرض الكل", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = textColor)
                 }
             }
         }
@@ -1390,17 +1423,17 @@ fun HomeTabContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                        .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(imageVector = Icons.Default.Inbox, contentDescription = null, tint = Color.White, modifier = Modifier.size(40.dp))
+                        Icon(imageVector = Icons.Default.Inbox, contentDescription = null, tint = textColor, modifier = Modifier.size(40.dp))
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "لا توجد إعلانات حالياً في $selectedCity ($selectedDistrict)", fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = "لا توجد إعلانات حالياً في $selectedCity ($selectedDistrict)", fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = textColor)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = "كن أول من يضيف إعلاناً في منطقتك عبر زر الإضافة أسفله", fontSize = 12.sp, color = Color.White, textAlign = TextAlign.Center)
+                        Text(text = "كن أول من يضيف إعلاناً في منطقتك عبر زر الإضافة أسفله", fontSize = 12.sp, color = subTextColor, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -1408,6 +1441,7 @@ fun HomeTabContent(
             items(offers.take(3)) { offer ->
                 OfferItemCard(
                     offer = offer,
+                    isDarkMode = isDarkMode,
                     activeColor = activeColor,
                     onClick = { onSelectOffer(offer) },
                     onDial = { onDial(offer.phone) },
@@ -1422,6 +1456,7 @@ fun HomeTabContent(
 @Composable
 fun OffersTabContent(
     isDriver: Boolean,
+    isDarkMode: Boolean,
     activeColor: Color,
     selectedCity: String,
     offers: List<DeliveryOffer>,
@@ -1432,6 +1467,10 @@ fun OffersTabContent(
     onOpenMap: (Double?, Double?, String, String?) -> Unit
 ) {
     var filterType by remember { mutableStateOf("الكل") }
+    val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
+    val textColor = if (isDarkMode) Color.White else Color(0xFF0F172A)
+    val subTextColor = if (isDarkMode) Color.White.copy(alpha = 0.8f) else Color(0xFF64748B)
+    val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
 
     val displayOffers = offers.filter {
         when (filterType) {
@@ -1449,8 +1488,8 @@ fun OffersTabContent(
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    Text(text = "سوق العروض والطلبيات", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
-                    Text(text = "المدينة: $selectedCity (${displayOffers.size} متاح)", fontSize = 12.sp, color = Color.White)
+                    Text(text = "سوق العروض والطلبيات", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = textColor)
+                    Text(text = "المدينة: $selectedCity (${displayOffers.size} متاح)", fontSize = 12.sp, color = subTextColor)
                 }
                 Button(
                     onClick = onNavigateToAdd,
@@ -1472,12 +1511,12 @@ fun OffersTabContent(
                     ElevatedFilterChip(
                         selected = isSelected,
                         onClick = { filterType = chip },
-                        label = { Text(chip, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White) },
+                        label = { Text(chip, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (isSelected) Color.White else textColor) },
                         colors = FilterChipDefaults.elevatedFilterChipColors(
                             selectedContainerColor = activeColor,
                             selectedLabelColor = Color.White,
-                            containerColor = NavySecondary,
-                            labelColor = Color.White
+                            containerColor = cardBg,
+                            labelColor = textColor
                         )
                     )
                 }
@@ -1489,11 +1528,11 @@ fun OffersTabContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = NavySecondary)
+                        .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = cardBg)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "لا توجد إعلانات مطابقة حالياً", fontSize = 13.5.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(text = "لا توجد إعلانات مطابقة حالياً", fontSize = 13.5.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, color = textColor)
                     }
                 }
             }
@@ -1501,6 +1540,7 @@ fun OffersTabContent(
             items(displayOffers) { offer ->
                 OfferItemCard(
                     offer = offer,
+                    isDarkMode = isDarkMode,
                     activeColor = activeColor,
                     onClick = { onSelectOffer(offer) },
                     onDial = { onDial(offer.phone) },
@@ -1515,6 +1555,7 @@ fun OffersTabContent(
 @Composable
 fun DriversTabContent(
     isDriver: Boolean,
+    isDarkMode: Boolean,
     activeColor: Color,
     selectedCity: String,
     drivers: List<DriverProfile>,
@@ -1522,6 +1563,11 @@ fun DriversTabContent(
     onDial: (String) -> Unit,
     onWhatsApp: (String) -> Unit
 ) {
+    val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
+    val textColor = if (isDarkMode) Color.White else Color(0xFF0F172A)
+    val subTextColor = if (isDarkMode) Color.White.copy(alpha = 0.8f) else Color(0xFF64748B)
+    val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
@@ -1532,12 +1578,12 @@ fun DriversTabContent(
                 text = "دليل السائقين المعتمدين (الليفرورات)",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = Color.White
+                color = textColor
             )
             Text(
                 text = "تواصل مباشرة مع الليفرور المتاح في $selectedCity بدون أي وسيط",
                 fontSize = 12.5.sp,
-                color = Color.White
+                color = subTextColor
             )
         }
 
@@ -1546,8 +1592,8 @@ fun DriversTabContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = NavySecondary)
+                        .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = cardBg)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
@@ -1555,13 +1601,13 @@ fun DriversTabContent(
                             textAlign = TextAlign.Center,
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = textColor
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "عند نشر عروض التوصيل ستظهر هنا تلقائياً",
                             fontSize = 12.sp,
-                            color = Color.White,
+                            color = subTextColor,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -1573,8 +1619,8 @@ fun DriversTabContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onSelectDriver(driver) }
-                        .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                        .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                    colors = CardDefaults.cardColors(containerColor = cardBg),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -1610,7 +1656,7 @@ fun DriversTabContent(
                                             text = driver.name,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.5.sp,
-                                            color = Color.White
+                                            color = textColor
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Box(
@@ -1630,12 +1676,12 @@ fun DriversTabContent(
                                     Text(
                                         text = "${driver.city} • ${driver.vehicle} (${driver.experience})",
                                         fontSize = 12.5.sp,
-                                        color = Color.White
+                                        color = subTextColor
                                     )
                                     Text(
                                         text = "${driver.completedTrips} توصيلة ناجحة",
                                         fontSize = 12.sp,
-                                        color = Color.White,
+                                        color = textColor,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -1653,7 +1699,7 @@ fun DriversTabContent(
                                 text = "الهاتف: ${driver.phone}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.5.sp,
-                                color = Color.White
+                                color = textColor
                             )
 
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1692,6 +1738,7 @@ fun DriversTabContent(
 @Composable
 fun ProfileTabContent(
     isDriver: Boolean,
+    isDarkMode: Boolean,
     activeColor: Color,
     selectedCity: String,
     userName: String,
@@ -1701,6 +1748,11 @@ fun ProfileTabContent(
     onSwitchRole: () -> Unit,
     onOpenEditDialog: () -> Unit
 ) {
+    val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
+    val textColor = if (isDarkMode) Color.White else Color(0xFF0F172A)
+    val subTextColor = if (isDarkMode) Color.White.copy(alpha = 0.8f) else Color(0xFF64748B)
+    val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp),
@@ -1710,8 +1762,8 @@ fun ProfileTabContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                    .border(1.dp, borderColor, RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
@@ -1723,35 +1775,35 @@ fun ProfileTabContent(
                             .size(68.dp)
                             .clip(CircleShape)
                             .background(activeColor.copy(alpha = 0.3f))
-                            .border(2.dp, Color.White, CircleShape),
+                            .border(2.dp, textColor, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (isDriver) Icons.Default.DeliveryDining else Icons.Default.Store,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = textColor,
                             modifier = Modifier.size(36.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Color.White)
+                    Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 17.sp, color = textColor)
                     Text(
                         text = if (isDriver) "حساب سائق توصيل • $selectedCity" else "حساب صاحب محل تجاري • $selectedCity",
                         fontSize = 12.5.sp,
-                        color = Color.White
+                        color = subTextColor
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(
                             onClick = onSwitchRole,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                            border = BorderStroke(1.dp, Color.White),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = textColor),
+                            border = BorderStroke(1.dp, borderColor),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier.height(44.dp)
                         ) {
-                            Icon(imageVector = Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
+                            Icon(imageVector = Icons.Default.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp), tint = textColor)
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = if (isDriver) "التبديل لوضع المحل" else "التبديل لوضع الليفرور", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(text = if (isDriver) "التبديل لوضع المحل" else "التبديل لوضع الليفرور", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = textColor)
                         }
                         Button(
                             onClick = onOpenEditDialog,
@@ -1772,8 +1824,8 @@ fun ProfileTabContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = NavySecondary),
+                    .border(1.dp, borderColor, RoundedCornerShape(16.dp)),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
@@ -1784,18 +1836,18 @@ fun ProfileTabContent(
                         text = "إعدادات ومعلومات الحساب:",
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.5.sp,
-                        color = Color.White
+                        color = textColor
                     )
 
-                    Divider(color = Color.White.copy(alpha = 0.3f))
+                    Divider(color = borderColor)
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "الاسم المعتمد في المنصة:", fontSize = 13.sp, color = Color.White)
-                        Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
+                        Text(text = "الاسم المعتمد في المنصة:", fontSize = 13.sp, color = subTextColor)
+                        Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
                     }
 
                     Row(
@@ -1803,8 +1855,8 @@ fun ProfileTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "رقم الهاتف للتواصل المباشر:", fontSize = 13.sp, color = Color.White)
-                        Text(text = userPhone, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
+                        Text(text = "رقم الهاتف للتواصل المباشر:", fontSize = 13.sp, color = subTextColor)
+                        Text(text = userPhone, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
                     }
 
                     Row(
@@ -1812,8 +1864,8 @@ fun ProfileTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "المدينة المحددة حالياً:", fontSize = 13.sp, color = Color.White)
-                        Text(text = selectedCity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color.White)
+                        Text(text = "المدينة المحددة حالياً:", fontSize = 13.sp, color = subTextColor)
+                        Text(text = selectedCity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
                     }
 
                     Row(
@@ -1821,8 +1873,8 @@ fun ProfileTabContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "نموذج الاستخدام المعتمد:", fontSize = 13.sp, color = Color.White)
-                        Text(text = "مجاني 100% بدون عمولات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFF4ADE80))
+                        Text(text = "نموذج الاستخدام المعتمد:", fontSize = 13.sp, color = subTextColor)
+                        Text(text = "مجاني 100% بدون عمولات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFF16A34A))
                     }
                 }
             }
@@ -1833,6 +1885,7 @@ fun ProfileTabContent(
 @Composable
 fun OfferItemCard(
     offer: DeliveryOffer,
+    isDarkMode: Boolean,
     activeColor: Color,
     onClick: () -> Unit,
     onDial: () -> Unit,
@@ -1840,13 +1893,17 @@ fun OfferItemCard(
     onOpenMap: ((Double?, Double?, String, String?) -> Unit)? = null
 ) {
     val isDriverOffer = offer.roleType == "عرض توصيل"
+    val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
+    val textColor = if (isDarkMode) Color.White else Color(0xFF0F172A)
+    val subTextColor = if (isDarkMode) Color.White.copy(alpha = 0.8f) else Color(0xFF64748B)
+    val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-        colors = CardDefaults.cardColors(containerColor = NavySecondary),
+            .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -1883,14 +1940,14 @@ fun OfferItemCard(
                         text = "${offer.city} • ${offer.district}",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = textColor
                     )
                 }
 
                 Text(
                     text = offer.timeAgo,
                     fontSize = 12.sp,
-                    color = Color.White
+                    color = subTextColor
                 )
             }
 
@@ -1900,7 +1957,7 @@ fun OfferItemCard(
                 text = offer.title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.5.sp,
-                color = Color.White
+                color = textColor
             )
 
             if (isDriverOffer && offer.vehicleType.isNotBlank()) {
@@ -1918,7 +1975,7 @@ fun OfferItemCard(
                         text = "وسيلة النقل: ${offer.vehicleType}",
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = textColor
                     )
                 }
             }
@@ -1928,7 +1985,7 @@ fun OfferItemCard(
             Text(
                 text = offer.details,
                 fontSize = 13.5.sp,
-                color = Color.White,
+                color = subTextColor,
                 lineHeight = 19.sp
             )
 
@@ -1943,7 +2000,7 @@ fun OfferItemCard(
                     text = "الهاتف: ${offer.phone}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.5.sp,
-                    color = Color.White
+                    color = textColor
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
