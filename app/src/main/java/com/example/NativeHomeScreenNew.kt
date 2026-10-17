@@ -428,7 +428,7 @@ fun NativeHomeScreenNew(
                         modifier = Modifier
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .padding(horizontal = 14.dp, vertical = 12.dp) // زيادة الحشوة الرأسية العامة للشريط العلوي
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -533,7 +533,8 @@ fun NativeHomeScreenNew(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        // مسافة متوازنة قدرها 12.dp بين الأيقونات العلوية وشريط وضع صاحب المحل
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Card(
                             colors = CardDefaults.cardColors(containerColor = activeColor),
@@ -579,7 +580,8 @@ fun NativeHomeScreenNew(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        // مسافة متوازنة قدرها 12.dp بين شريط وضع صاحب المحل وشريطي المدينة والحي
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
