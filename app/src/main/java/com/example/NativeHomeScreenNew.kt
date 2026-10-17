@@ -221,7 +221,7 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
 fun AmazonStyleLivlinkHeader(activeColor: Color) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(horizontal = 4.dp)
+        modifier = Modifier.padding(horizontal = 2.dp)
     ) {
         Text(
             text = "LIVLINK",
@@ -422,41 +422,46 @@ fun NativeHomeScreenNew(
                         modifier = Modifier
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 14.dp, vertical = 8.dp) // تقليل الهوامش العمودية لتقليل الفراغ غير الضروري
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // الجهة اليمنى: مربع LV المؤقت بحجم متناسق واحترافي
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(activeColor),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "LV",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 18.sp,
-                                    color = Color.White
-                                )
-                            }
-
-                            // الوسط: اسم التطبيق والشعار العربي بتوازن دقيق
-                            AmazonStyleLivlinkHeader(activeColor = activeColor)
-
-                            // الجهة اليسرى: الأيقونات الثلاث بتوحيد الأبعاد والمسافات
+                            // الجهة اليمنى: مربع LV المؤقت بحجم أكبر متناسق ومكحوز نحو اسم LIVLINK
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp) // تكبير حجم أيقونة/مربع التطبيق
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(activeColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "LV",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 20.sp,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+
+                            // الوسط: اسم التطبيق والشعار العربي
+                            AmazonStyleLivlinkHeader(activeColor = activeColor)
+
+                            // الجهة اليسرى: الأيقونات الثلاث بمسافات متباعدة ومريحة
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp), // زيادة المسافة بين الأيقونات الثلاث
                                 modifier = Modifier.wrapContentSize()
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(35.dp)
+                                        .size(36.dp)
                                         .clip(CircleShape)
                                         .background(if (!isDriver) ShopBlueDarkPrimary else Color(0xFF1E293B))
                                         .border(
@@ -474,13 +479,13 @@ fun NativeHomeScreenNew(
                                         imageVector = Icons.Default.Store,
                                         contentDescription = "وضع صاحب المحل",
                                         tint = Color.White,
-                                        modifier = Modifier.size(17.dp)
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
 
                                 Box(
                                     modifier = Modifier
-                                        .size(35.dp)
+                                        .size(36.dp)
                                         .clip(CircleShape)
                                         .background(if (isDriver) DriverOrangePrimary else Color(0xFF1E293B))
                                         .border(
@@ -498,13 +503,13 @@ fun NativeHomeScreenNew(
                                         painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                         contentDescription = "وضع سائق التوصيل",
                                         tint = Color.White,
-                                        modifier = Modifier.size(17.dp)
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
 
                                 Box(
                                     modifier = Modifier
-                                        .size(35.dp)
+                                        .size(36.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFF1E293B))
                                         .border(
@@ -519,13 +524,13 @@ fun NativeHomeScreenNew(
                                         imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
                                         contentDescription = "تغيير الوضع",
                                         tint = Color.White,
-                                        modifier = Modifier.size(17.dp)
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp)) // تقليل الفراغ عمودياً بين الشريط وزر الحالة
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Card(
                             colors = CardDefaults.cardColors(containerColor = activeColor),
