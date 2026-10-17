@@ -219,7 +219,10 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
 
 @Composable
 fun AmazonStyleLivlinkHeader(activeColor: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(start = 6.dp) // تحريك بسيط نحو الوسط لتجنب التصاق المربع والشعار
+    ) {
         Text(
             text = "LIVLINK",
             fontSize = 21.sp,
@@ -233,7 +236,7 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.width(130.dp)
+            modifier = Modifier.width(135.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Store,
@@ -432,28 +435,28 @@ fun NativeHomeScreenNew(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(RoundedCornerShape(10.dp))
+                                        .size(44.dp) // تكبير بسيط لصورة التطبيق المربعة لتبدو احترافية
+                                        .clip(RoundedCornerShape(11.dp))
                                         .background(activeColor),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "LV",
                                         fontWeight = FontWeight.Black,
-                                        fontSize = 17.sp,
+                                        fontSize = 19.sp,
                                         color = Color.White
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
                                 
                                 AmazonStyleLivlinkHeader(activeColor = activeColor)
                             }
 
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.wrapContentSize()
                             ) {
                                 Box(
@@ -805,8 +808,8 @@ fun NativeHomeScreenNew(
                     )
 
                     2 -> AddScreen(
+                        isDriver = isDriver, // تمرير الوضع الحالي لتتجاوب واجهة الإضافة فوراً عند التغيير
                         onDismiss = { currentTab = 1 },
-                        initialType = if (isDriver) "عرض توصيل" else "طلب توصيل",
                         initialCity = selectedCity,
                         onAddSubmit = { title, city, phone, details, type, lat, lng, address ->
                             val cleanVehicle = if (type == "عرض توصيل") {
@@ -992,13 +995,14 @@ fun NativeHomeScreenNew(
 
 @Composable
 fun AddScreen(
+    isDriver: Boolean,
     onDismiss: () -> Unit,
-    initialType: String = "طلب توصيل",
     initialCity: String = "جميع مدن المغرب",
     onAddSubmit: (title: String, city: String, phone: String, details: String, type: String, lat: Double?, lng: Double?, address: String?) -> Unit
 ) {
     val context = LocalContext.current
-    var selectedType by remember { mutableStateOf(initialType) }
+    // جعل نوع الإعلان الافتراضي يتغير فوراً بناءً على الوضع النشط (صاحب محل أو ليفرور)
+    var selectedType by remember(isDriver) { mutableStateOf(if (isDriver) "عرض توصيل" else "طلب توصيل") }
     var titleText by remember { mutableStateOf("") }
     var cityText by remember { mutableStateOf(if (initialCity == "جميع مدن المغرب") "الدار البيضاء" else initialCity) }
     var phoneText by remember { mutableStateOf("") }
