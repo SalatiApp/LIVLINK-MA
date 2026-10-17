@@ -1001,7 +1001,6 @@ fun AddScreen(
     onAddSubmit: (title: String, city: String, phone: String, details: String, type: String, lat: Double?, lng: Double?, address: String?) -> Unit
 ) {
     val context = LocalContext.current
-    // جعل نوع الإعلان الافتراضي يتغير فوراً بناءً على الوضع النشط (صاحب محل أو ليفرور)
     var selectedType by remember(isDriver) { mutableStateOf(if (isDriver) "عرض توصيل" else "طلب توصيل") }
     var titleText by remember { mutableStateOf("") }
     var cityText by remember { mutableStateOf(if (initialCity == "جميع مدن المغرب") "الدار البيضاء" else initialCity) }
