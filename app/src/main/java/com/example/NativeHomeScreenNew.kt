@@ -221,34 +221,34 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
 fun AmazonStyleLivlinkHeader(activeColor: Color) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(start = 6.dp) // تحريك بسيط نحو الوسط لتجنب التصاق المربع والشعار
+        modifier = Modifier.padding(horizontal = 4.dp)
     ) {
         Text(
             text = "LIVLINK",
-            fontSize = 21.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Black,
             color = Color.White,
             letterSpacing = 1.2.sp
         )
 
-        Spacer(modifier = Modifier.height(3.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.width(135.dp)
+            modifier = Modifier.width(130.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Store,
                 contentDescription = "محل",
                 tint = activeColor,
-                modifier = Modifier.size(13.dp)
+                modifier = Modifier.size(12.dp)
             )
 
             Canvas(
                 modifier = Modifier
                     .weight(1f)
-                    .height(12.dp)
+                    .height(10.dp)
                     .padding(horizontal = 2.dp)
             ) {
                 val path = Path().apply {
@@ -263,23 +263,23 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
                 drawPath(
                     path = path,
                     color = Color(0xFF334155),
-                    style = Stroke(width = 7f, cap = StrokeCap.Round)
+                    style = Stroke(width = 6f, cap = StrokeCap.Round)
                 )
 
                 drawPath(
                     path = path,
                     color = Color.White,
                     style = Stroke(
-                        width = 2.5f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 4f), 0f),
+                        width = 2f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f),
                         cap = StrokeCap.Round
                     )
                 )
 
                 val arrowPath = Path().apply {
                     moveTo(0f, 2f)
-                    lineTo(8f, -2f)
-                    lineTo(7f, 6f)
+                    lineTo(7f, -2f)
+                    lineTo(6f, 5f)
                     close()
                 }
                 drawPath(arrowPath, color = activeColor)
@@ -289,15 +289,15 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
                 painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                 contentDescription = "دراجة نارية",
                 tint = DriverOrangePrimary,
-                modifier = Modifier.size(14.dp)
+                modifier = Modifier.size(13.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(3.dp))
 
         Text(
             text = "منصة ربط المحلات بالليفرورات",
-            fontSize = 12.5.sp,
+            fontSize = 12.sp,
             color = Color.White,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
@@ -422,46 +422,41 @@ fun NativeHomeScreenNew(
                         modifier = Modifier
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .padding(horizontal = 14.dp, vertical = 8.dp) // تقليل الهوامش العمودية لتقليل الفراغ غير الضروري
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f, fill = false)
+                            // الجهة اليمنى: مربع LV المؤقت بحجم متناسق واحترافي
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(activeColor),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp) // تكبير بسيط لصورة التطبيق المربعة لتبدو احترافية
-                                        .clip(RoundedCornerShape(11.dp))
-                                        .background(activeColor),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "LV",
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 19.sp,
-                                        color = Color.White
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                
-                                AmazonStyleLivlinkHeader(activeColor = activeColor)
+                                Text(
+                                    text = "LV",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 18.sp,
+                                    color = Color.White
+                                )
                             }
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                            // الوسط: اسم التطبيق والشعار العربي بتوازن دقيق
+                            AmazonStyleLivlinkHeader(activeColor = activeColor)
 
+                            // الجهة اليسرى: الأيقونات الثلاث بتوحيد الأبعاد والمسافات
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 modifier = Modifier.wrapContentSize()
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(35.dp)
                                         .clip(CircleShape)
                                         .background(if (!isDriver) ShopBlueDarkPrimary else Color(0xFF1E293B))
                                         .border(
@@ -479,13 +474,13 @@ fun NativeHomeScreenNew(
                                         imageVector = Icons.Default.Store,
                                         contentDescription = "وضع صاحب المحل",
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
 
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(35.dp)
                                         .clip(CircleShape)
                                         .background(if (isDriver) DriverOrangePrimary else Color(0xFF1E293B))
                                         .border(
@@ -503,13 +498,13 @@ fun NativeHomeScreenNew(
                                         painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                         contentDescription = "وضع سائق التوصيل",
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
 
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(35.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFF1E293B))
                                         .border(
@@ -524,20 +519,20 @@ fun NativeHomeScreenNew(
                                         imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
                                         contentDescription = "تغيير الوضع",
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(11.dp))
+                        Spacer(modifier = Modifier.height(8.dp)) // تقليل الفراغ عمودياً بين الشريط وزر الحالة
 
                         Card(
                             colors = CardDefaults.cardColors(containerColor = activeColor),
-                            shape = RoundedCornerShape(9.dp),
+                            shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(9.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
                                 .clickable {
                                     val newRole = if (isDriver) "صاحب محل" else "ليفرور"
                                     onRoleChange(newRole)
@@ -546,7 +541,7 @@ fun NativeHomeScreenNew(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
                             ) {
@@ -555,20 +550,20 @@ fun NativeHomeScreenNew(
                                         painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                         contentDescription = null,
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Default.Store,
                                         contentDescription = null,
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = if (isDriver) "وضع الليفرور (نشط)" else "وضع صاحب المحل (نشط)",
-                                    fontSize = 13.5.sp,
+                                    fontSize = 13.sp,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
@@ -576,21 +571,21 @@ fun NativeHomeScreenNew(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(11.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(9.dp))
+                                    .clip(RoundedCornerShape(8.dp))
                                     .background(NavySecondary)
-                                    .border(1.dp, Color(0xFF334155), RoundedCornerShape(9.dp))
+                                    .border(1.dp, Color(0xFF334155), RoundedCornerShape(8.dp))
                                     .clickable { cityDropdownExpanded = true }
-                                    .padding(horizontal = 10.dp, vertical = 9.dp)
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -605,12 +600,12 @@ fun NativeHomeScreenNew(
                                             imageVector = Icons.Default.LocationOn,
                                             contentDescription = null,
                                             tint = Color.White,
-                                            modifier = Modifier.size(15.dp)
+                                            modifier = Modifier.size(14.dp)
                                         )
-                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
                                         Text(
                                             text = selectedCity,
-                                            fontSize = 12.5.sp,
+                                            fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White,
                                             maxLines = 1,
@@ -621,7 +616,7 @@ fun NativeHomeScreenNew(
                                         imageVector = Icons.Default.ArrowDropDown,
                                         contentDescription = null,
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
 
@@ -645,11 +640,11 @@ fun NativeHomeScreenNew(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(9.dp))
+                                    .clip(RoundedCornerShape(8.dp))
                                     .background(NavySecondary)
-                                    .border(1.dp, Color(0xFF334155), RoundedCornerShape(9.dp))
+                                    .border(1.dp, Color(0xFF334155), RoundedCornerShape(8.dp))
                                     .clickable { districtDropdownExpanded = true }
-                                    .padding(horizontal = 10.dp, vertical = 9.dp)
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -664,12 +659,12 @@ fun NativeHomeScreenNew(
                                             imageVector = Icons.Default.Map,
                                             contentDescription = null,
                                             tint = Color.White,
-                                            modifier = Modifier.size(15.dp)
+                                            modifier = Modifier.size(14.dp)
                                         )
-                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
                                         Text(
                                             text = selectedDistrict,
-                                            fontSize = 12.5.sp,
+                                            fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White,
                                             maxLines = 1,
@@ -680,7 +675,7 @@ fun NativeHomeScreenNew(
                                         imageVector = Icons.Default.ArrowDropDown,
                                         contentDescription = null,
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                 }
 
@@ -808,7 +803,7 @@ fun NativeHomeScreenNew(
                     )
 
                     2 -> AddScreen(
-                        isDriver = isDriver, // تمرير الوضع الحالي لتتجاوب واجهة الإضافة فوراً عند التغيير
+                        isDriver = isDriver,
                         onDismiss = { currentTab = 1 },
                         initialCity = selectedCity,
                         onAddSubmit = { title, city, phone, details, type, lat, lng, address ->
