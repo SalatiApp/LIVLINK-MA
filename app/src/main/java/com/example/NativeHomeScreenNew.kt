@@ -428,7 +428,7 @@ fun NativeHomeScreenNew(
                         modifier = Modifier
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 14.dp, vertical = 12.dp) // زيادة الحشوة الرأسية العامة للشريط العلوي
+                            .padding(horizontal = 14.dp, vertical = 12.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -533,7 +533,6 @@ fun NativeHomeScreenNew(
                             }
                         }
 
-                        // مسافة متوازنة قدرها 12.dp بين الأيقونات العلوية وشريط وضع صاحب المحل
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Card(
@@ -580,7 +579,6 @@ fun NativeHomeScreenNew(
                             }
                         }
 
-                        // مسافة متوازنة قدرها 12.dp بين شريط وضع صاحب المحل وشريطي المدينة والحي
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Row(
@@ -1147,51 +1145,54 @@ fun AddScreen(
                             .height(100.dp)
                     )
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
-                        colors = CardDefaults.cardColors(containerColor = if (isDarkMode) NavyPrimary else Color(0xFFF1F5F9)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // إخفاء بطاقة تحديد موقع الخريطة تماماً إذا كان وضع الليفرور أوالنوع المحدد "عرض توصيل"
+                    if (!isDriver && selectedType == "طلب توصيل") {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, borderColor, RoundedCornerShape(12.dp)),
+                            colors = CardDefaults.cardColors(containerColor = if (isDarkMode) NavyPrimary else Color(0xFFF1F5F9)),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = textColor, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "موقع المحل على الخريطة (اختياري لصاحب المحل)",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.5.sp,
-                                    color = textColor
-                                )
-                            }
-                            Text(
-                                text = "يسمح بتحديد إحداثيات موقع محلك الجغرافي لتسهيل وصول الليفرورات إليك عبر الخريطة.",
-                                fontSize = 12.sp,
-                                color = subTextColor,
-                                lineHeight = 17.sp
-                            )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(
-                                    onClick = { Toast.makeText(context, "تم تحديد الموقع عبر GPS بنجاح", Toast.LENGTH_SHORT).show() },
-                                    colors = ButtonDefaults.buttonColors(containerColor = ShopBlueAccent),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("تحديد عبر GPS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Column(
+                                modifier = Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = textColor, modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "موقع المحل على الخريطة (اختياري لصاحب المحل)",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.5.sp,
+                                        color = textColor
+                                    )
                                 }
+                                Text(
+                                    text = "يسمح بتحديد إحداثيات موقع محلك الجغرافي لتسهيل وصول الليفرورات إليك عبر الخريطة.",
+                                    fontSize = 12.sp,
+                                    color = subTextColor,
+                                    lineHeight = 17.sp
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(
+                                        onClick = { Toast.makeText(context, "تم تحديد الموقع عبر GPS بنجاح", Toast.LENGTH_SHORT).show() },
+                                        colors = ButtonDefaults.buttonColors(containerColor = ShopBlueAccent),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("تحديد عبر GPS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    }
 
-                                OutlinedButton(
-                                    onClick = { Toast.makeText(context, "إدخال يدوي للموقع", Toast.LENGTH_SHORT).show() },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = textColor),
-                                    border = BorderStroke(1.dp, borderColor)
-                                ) {
-                                    Text("إدخال يدوي", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textColor)
+                                    OutlinedButton(
+                                        onClick = { Toast.makeText(context, "إدخال يدوي للموقع", Toast.LENGTH_SHORT).show() },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = textColor),
+                                        border = BorderStroke(1.dp, borderColor)
+                                    ) {
+                                        Text("إدخال يدوي", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = textColor)
+                                    }
                                 }
                             }
                         }
@@ -1876,7 +1877,7 @@ fun ProfileTabContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(text = "نموذج الاستخدام المعتمد:", fontSize = 13.sp, color = subTextColor)
-                        Text(text = "مجاني 100% بدون عمولات", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFF16A34A))
+                        Text(text = "تطبيق مجاني 100%", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFF16A34A))
                     }
                 }
             }
