@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -445,14 +447,14 @@ fun NativeHomeScreenNew(
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(activeColor),
                                     contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "LV",
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 20.sp,
-                                        color = Color.White
-                                    )
-                                }
+                                 ) {
+                                     Image(
+                                         painter = painterResource(id = R.mipmap.ic_launcher),
+                                         contentDescription = "شعار التطبيق",
+                                         modifier = Modifier.fillMaxSize(),
+                                         contentScale = ContentScale.Crop
+                                     )
+                                 }
                             }
 
                             AmazonStyleLivlinkHeader(activeColor = activeColor)
@@ -1145,7 +1147,6 @@ fun AddScreen(
                             .height(100.dp)
                     )
 
-                    // إخفاء بطاقة تحديد موقع الخريطة تماماً إذا كان وضع الليفرور أوالنوع المحدد "عرض توصيل"
                     if (!isDriver && selectedType == "طلب توصيل") {
                         Card(
                             modifier = Modifier
