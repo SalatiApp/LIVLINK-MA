@@ -221,35 +221,36 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
 fun AmazonStyleLivlinkHeader(activeColor: Color) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(horizontal = 2.dp)
+        modifier = Modifier.padding(horizontal = 4.dp)
     ) {
         Text(
             text = "LIVLINK",
-            fontSize = 20.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Black,
             color = Color.White,
-            letterSpacing = 1.2.sp
+            letterSpacing = 1.5.sp,
+            textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.width(130.dp)
+            modifier = Modifier.width(150.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Store,
                 contentDescription = "محل",
                 tint = activeColor,
-                modifier = Modifier.size(12.dp)
+                modifier = Modifier.size(15.dp)
             )
 
             Canvas(
                 modifier = Modifier
                     .weight(1f)
-                    .height(10.dp)
-                    .padding(horizontal = 2.dp)
+                    .height(12.dp)
+                    .padding(horizontal = 3.dp)
             ) {
                 val path = Path().apply {
                     moveTo(size.width, 2f)
@@ -263,14 +264,14 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
                 drawPath(
                     path = path,
                     color = Color(0xFF334155),
-                    style = Stroke(width = 6f, cap = StrokeCap.Round)
+                    style = Stroke(width = 7f, cap = StrokeCap.Round)
                 )
 
                 drawPath(
                     path = path,
                     color = Color.White,
                     style = Stroke(
-                        width = 2f,
+                        width = 2.5f,
                         pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f),
                         cap = StrokeCap.Round
                     )
@@ -278,8 +279,8 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
 
                 val arrowPath = Path().apply {
                     moveTo(0f, 2f)
-                    lineTo(7f, -2f)
-                    lineTo(6f, 5f)
+                    lineTo(8f, -2f)
+                    lineTo(7f, 6f)
                     close()
                 }
                 drawPath(arrowPath, color = activeColor)
@@ -289,17 +290,18 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
                 painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                 contentDescription = "دراجة نارية",
                 tint = DriverOrangePrimary,
-                modifier = Modifier.size(13.dp)
+                modifier = Modifier.size(16.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(3.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Text(
             text = "منصة ربط المحلات بالليفرورات",
-            fontSize = 12.sp,
-            color = Color.White,
+            fontSize = 11.sp,
+            color = Color.White.copy(alpha = 0.9f),
             fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -435,40 +437,69 @@ fun NativeHomeScreenNew(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
+                            // زر LV + أيقونة الوضع الليلي حداه
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(RoundedCornerShape(12.dp))
+                                        .size(54.dp)
+                                        .clip(RoundedCornerShape(14.dp))
                                         .background(activeColor),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "LV",
                                         fontWeight = FontWeight.Black,
-                                        fontSize = 20.sp,
+                                        fontSize = 22.sp,
                                         color = Color.White
+                                    )
+                                }
+
+                                // أيقونة الوضع الليلي حدا LV
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF1E293B))
+                                        .border(
+                                            width = 1.dp,
+                                            color = Color(0xFF475569),
+                                            shape = CircleShape
+                                        )
+                                        .clickable { onToggleDarkMode() },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                        contentDescription = "تغيير الوضع",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
                             }
 
-                            AmazonStyleLivlinkHeader(activeColor = activeColor)
+                            // الشعار في الوسط تماماً
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                AmazonStyleLivlinkHeader(activeColor = activeColor)
+                            }
 
+                            // أيقونات تبديل الوضع على اليسار
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.wrapContentSize()
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(42.dp)
                                         .clip(CircleShape)
                                         .background(if (!isDriver) ShopBlueDarkPrimary else Color(0xFF1E293B))
                                         .border(
-                                            width = 1.dp,
+                                            width = 1.5.dp,
                                             color = if (!isDriver) Color(0xFF93C5FD) else Color(0xFF334155),
                                             shape = CircleShape
                                         )
@@ -482,17 +513,17 @@ fun NativeHomeScreenNew(
                                         imageVector = Icons.Default.Store,
                                         contentDescription = "وضع صاحب المحل",
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
 
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(42.dp)
                                         .clip(CircleShape)
                                         .background(if (isDriver) DriverOrangePrimary else Color(0xFF1E293B))
                                         .border(
-                                            width = 1.dp,
+                                            width = 1.5.dp,
                                             color = if (isDriver) Color(0xFFFED7AA) else Color(0xFF334155),
                                             shape = CircleShape
                                         )
@@ -506,28 +537,7 @@ fun NativeHomeScreenNew(
                                         painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                                         contentDescription = "وضع سائق التوصيل",
                                         tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF1E293B))
-                                        .border(
-                                            width = 1.dp,
-                                            color = Color(0xFF334155),
-                                            shape = CircleShape
-                                        )
-                                        .clickable { onToggleDarkMode() },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                        contentDescription = "تغيير الوضع",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
                             }
