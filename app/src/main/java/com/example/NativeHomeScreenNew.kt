@@ -1,5 +1,6 @@
 package com.example
 
+import androidx.compose.foundation.Image
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -442,15 +443,13 @@ fun NativeHomeScreenNew(
                                 Box(
                                     modifier = Modifier
                                         .size(48.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(activeColor),
+                                        .clip(RoundedCornerShape(12.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = "LV",
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 20.sp,
-                                        color = Color.White
+                                    Image(
+                                        painter = painterResource(id = R.mipmap.ic_launcher),
+                                        contentDescription = "LIVLINK Logo",
+                                        modifier = Modifier.size(48.dp)
                                     )
                                 }
                             }
@@ -1145,7 +1144,6 @@ fun AddScreen(
                             .height(100.dp)
                     )
 
-                    // إخفاء بطاقة تحديد موقع الخريطة تماماً إذا كان وضع الليفرور أوالنوع المحدد "عرض توصيل"
                     if (!isDriver && selectedType == "طلب توصيل") {
                         Card(
                             modifier = Modifier
