@@ -2,6 +2,23 @@ package com.example
 
 import android.content.Context
 import android.content.Intent
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -113,6 +130,90 @@ data class DriverProfile(
     val completedTrips: Int = 0
 )
 
+@SuppressLint("MissingPermission")
+fun fetchCurrentLocation(context: Context, onResult: (Double?, Double?) -> Unit) {
+    val lm = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+    if (lm == null) {
+        onResult(null, null)
+        return
+    }
+
+    val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER).filter {
+        try { lm.isProviderEnabled(it) } catch (e: Exception) { false }
+    }
+
+    if (providers.isEmpty()) {
+        Toast.makeText(context, "فعّل GPS من إعدادات الهاتف ثم عاود", Toast.LENGTH_LONG).show()
+        try {
+            context.startActivity(
+                Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        } catch (e: Exception) {}
+        onResult(null, null)
+        return
+    }
+
+    val lastKnown = try {
+        providers.mapNotNull { lm.getLastKnownLocation(it) }.maxByOrNull { it.time }
+    } catch (e: Exception) {
+        null
+    }
+
+    if (lastKnown != null && System.currentTimeMillis() - lastKnown.time < 120_000) {
+        onResult(lastKnown.latitude, lastKnown.longitude)
+        return
+    }
+
+    val handler = Handler(Looper.getMainLooper())
+    var finished = false
+    val listeners = mutableListOf<LocationListener>()
+
+    fun finish(loc: Location?) {
+        if (finished) return
+        finished = true
+        listeners.forEach { try { lm.removeUpdates(it) } catch (e: Exception) {} }
+        handler.removeCallbacksAndMessages(null)
+        val result = loc ?: lastKnown
+        onResult(result?.latitude, result?.longitude)
+    }
+
+    providers.forEach { provider ->
+        val listener = object : LocationListener {
+            override fun onLocationChanged(location: Location) { finish(location) }
+            @Suppress("DEPRECATION")
+            override fun onStatusChanged(p: String?, status: Int, extras: Bundle?) {}
+            override fun onProviderEnabled(p: String) {}
+            override fun onProviderDisabled(p: String) {}
+        }
+        listeners.add(listener)
+        try {
+            lm.requestLocationUpdates(provider, 0L, 0f, listener, Looper.getMainLooper())
+        } catch (e: Exception) {}
+    }
+
+    handler.postDelayed({ finish(null) }, 20_000)
+}
+
+fun openLocationInGoogleMaps(context: Context, lat: Double, lng: Double, label: String) {
+    val geoUri = Uri.parse("geo:$lat,$lng?q=$lat,$lng(${Uri.encode(label)})")
+    try {
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW, geoUri)
+                .setPackage("com.google.android.apps.maps")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    } catch (e: Exception) {
+        try {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        } catch (e2: Exception) {
+            Toast.makeText(context, "الموقع: $lat, $lng", Toast.LENGTH_LONG).show()
+        }
+    }
+}
+
 fun saveOffersToPrefs(context: Context, offers: List<DeliveryOffer>) {
     try {
         val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
@@ -221,7 +322,7 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
 fun AmazonStyleLivlinkHeader(activeColor: Color) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(horizontal = 4.dp)
+        modifier = Modifier
     ) {
         Text(
             text = "LIVLINK",
@@ -237,7 +338,7 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.width(150.dp)
+            modifier = Modifier.width(116.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Store,
@@ -339,8 +440,18 @@ fun NativeHomeScreenNew(
         var selectedDriverForDetails by remember { mutableStateOf<DriverProfile?>(null) }
 
         var showEditProfileDialog by remember { mutableStateOf(false) }
-        var profileName by remember { mutableStateOf(if (isDriver) "سائق توصيل معتمد" else "محل تجاري - ليفلينك") }
-        var profilePhone by remember { mutableStateOf("0661234567") }
+        var profileName by remember {
+            mutableStateOf(
+                context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE).getString("profile_name", null)
+                    ?: (if (isDriver) "سائق توصيل معتمد" else "محل تجاري - ليفلينك")
+            )
+        }
+        var profilePhone by remember {
+            mutableStateOf(
+                context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE).getString("profile_phone", null)
+                    ?: "0661234567"
+            )
+        }
 
         val offersList = remember {
             val saved = loadOffersFromPrefs(context)
@@ -418,6 +529,79 @@ fun NativeHomeScreenNew(
             }
         }
 
+        if (showEditProfileDialog) {
+            var editName by remember { mutableStateOf(profileName) }
+            var editPhone by remember { mutableStateOf(profilePhone) }
+            AlertDialog(
+                onDismissRequest = { showEditProfileDialog = false },
+                title = { Text("تعديل الملف الشخصي", fontWeight = FontWeight.Bold, color = textColor) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = editName,
+                            onValueChange = { editName = it },
+                            label = { Text("الاسم", color = subTextColor) },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
+                                focusedBorderColor = activeColor,
+                                unfocusedBorderColor = borderColor,
+                                focusedLabelColor = activeColor
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        OutlinedTextField(
+                            value = editPhone,
+                            onValueChange = { editPhone = it },
+                            label = { Text("رقم الهاتف", color = subTextColor) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = textColor,
+                                unfocusedTextColor = textColor,
+                                focusedBorderColor = activeColor,
+                                unfocusedBorderColor = borderColor,
+                                focusedLabelColor = activeColor
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (editName.isBlank() || editPhone.isBlank()) {
+                                Toast.makeText(context, "يرجى ملء الاسم والهاتف", Toast.LENGTH_SHORT).show()
+                            } else {
+                                profileName = editName.trim()
+                                profilePhone = editPhone.trim()
+                                context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
+                                    .edit()
+                                    .putString("profile_name", profileName)
+                                    .putString("profile_phone", profilePhone)
+                                    .apply()
+                                Toast.makeText(context, "تم حفظ التعديلات", Toast.LENGTH_SHORT).show()
+                                showEditProfileDialog = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = activeColor)
+                    ) {
+                        Text("حفظ", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(
+                        onClick = { showEditProfileDialog = false },
+                        border = BorderStroke(1.dp, borderColor)
+                    ) {
+                        Text("إلغاء", color = textColor, fontWeight = FontWeight.Bold)
+                    }
+                },
+                containerColor = if (isDarkMode) NavyPrimary else Color.White
+            )
+        }
+
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -430,120 +614,104 @@ fun NativeHomeScreenNew(
                         modifier = Modifier
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                            .padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 18.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // زر LV + أيقونة الوضع الليلي حداه
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(54.dp)
-                                        .clip(RoundedCornerShape(14.dp))
-                                        .background(activeColor),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "LV",
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 22.sp,
-                                        color = Color.White
-                                    )
-                                }
-
-                                // أيقونة الوضع الليلي حدا LV
-                                Box(
-                                    modifier = Modifier
-                                        .size(38.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF1E293B))
-                                        .border(
-                                            width = 1.dp,
-                                            color = Color(0xFF475569),
-                                            shape = CircleShape
-                                        )
-                                        .clickable { onToggleDarkMode() },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                        contentDescription = "تغيير الوضع",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-
-                            // الشعار في الوسط تماماً
+                            // أيقونة التطبيق (بدل LV)
                             Box(
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(Color.White),
                                 contentAlignment = Alignment.Center
                             ) {
-                                AmazonStyleLivlinkHeader(activeColor = activeColor)
+                                Image(
+                                    painter = painterResource(id = R.drawable.livlink_logo),
+                                    contentDescription = "LIVLINK",
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(4.dp)
+                                )
                             }
 
-                            // أيقونات تبديل الوضع على اليسار
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            // الوضع الليلي
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF1E293B))
+                                    .border(1.dp, Color(0xFF475569), CircleShape)
+                                    .clickable { onToggleDarkMode() },
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(CircleShape)
-                                        .background(if (!isDriver) ShopBlueDarkPrimary else Color(0xFF1E293B))
-                                        .border(
-                                            width = 1.5.dp,
-                                            color = if (!isDriver) Color(0xFF93C5FD) else Color(0xFF334155),
-                                            shape = CircleShape
-                                        )
-                                        .clickable {
-                                            onRoleChange("صاحب محل")
-                                            Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل", Toast.LENGTH_SHORT).show()
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Store,
-                                        contentDescription = "وضع صاحب المحل",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
+                                Icon(
+                                    imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                    contentDescription = "تغيير الوضع",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
 
-                                Box(
-                                    modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isDriver) DriverOrangePrimary else Color(0xFF1E293B))
-                                        .border(
-                                            width = 1.5.dp,
-                                            color = if (isDriver) Color(0xFFFED7AA) else Color(0xFF334155),
-                                            shape = CircleShape
-                                        )
-                                        .clickable {
-                                            onRoleChange("ليفرور")
-                                            Toast.makeText(context, "تم التبديل إلى وضع سائق التوصيل", Toast.LENGTH_SHORT).show()
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
-                                        contentDescription = "وضع سائق التوصيل",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(22.dp)
+                            // الشعار
+                            AmazonStyleLivlinkHeader(activeColor = activeColor)
+
+                            // وضع صاحب المحل
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(if (!isDriver) ShopBlueDarkPrimary else Color(0xFF1E293B))
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = if (!isDriver) Color(0xFF93C5FD) else Color(0xFF334155),
+                                        shape = CircleShape
                                     )
-                                }
+                                    .clickable {
+                                        onRoleChange("صاحب محل")
+                                        Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل", Toast.LENGTH_SHORT).show()
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Store,
+                                    contentDescription = "وضع صاحب المحل",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            // وضع الليفرور
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isDriver) DriverOrangePrimary else Color(0xFF1E293B))
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = if (isDriver) Color(0xFFFED7AA) else Color(0xFF334155),
+                                        shape = CircleShape
+                                    )
+                                    .clickable {
+                                        onRoleChange("ليفرور")
+                                        Toast.makeText(context, "تم التبديل إلى وضع سائق التوصيل", Toast.LENGTH_SHORT).show()
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
+                                    contentDescription = "وضع سائق التوصيل",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         Card(
                             colors = CardDefaults.cardColors(containerColor = activeColor),
@@ -589,11 +757,11 @@ fun NativeHomeScreenNew(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
@@ -1035,11 +1203,46 @@ fun AddScreen(
     var detailsText by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
+    // حالة الموقع
+    var latValue by remember { mutableStateOf<Double?>(null) }
+    var lngValue by remember { mutableStateOf<Double?>(null) }
+    var addressValue by remember { mutableStateOf<String?>(null) }
+    var isLocating by remember { mutableStateOf(false) }
+    var showManualDialog by remember { mutableStateOf(false) }
+    var manualAddressText by remember { mutableStateOf("") }
+
     val screenBg = if (isDarkMode) NavyPrimary else Color(0xFFF8FAFC)
     val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
     val textColor = if (isDarkMode) Color.White else Color(0xFF0F172A)
     val subTextColor = if (isDarkMode) Color.White.copy(alpha = 0.8f) else Color(0xFF64748B)
     val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFCBD5E1)
+
+    fun startLocating() {
+        isLocating = true
+        fetchCurrentLocation(context) { lat, lng ->
+            isLocating = false
+            if (lat != null && lng != null) {
+                latValue = lat
+                lngValue = lng
+                Toast.makeText(context, "تم تحديد الموقع بنجاح", Toast.LENGTH_SHORT).show()
+                openLocationInGoogleMaps(context, lat, lng, titleText.ifBlank { "موقع المحل" })
+            } else {
+                Toast.makeText(context, "ما قدرناش نحددو الموقع، تأكد أن GPS مفعل وعاود", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        val granted = result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) {
+            startLocating()
+        } else {
+            Toast.makeText(context, "خاصك تقبل صلاحية الموقع باش نحددو موقع المحل", Toast.LENGTH_LONG).show()
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -1183,19 +1386,60 @@ fun AddScreen(
                                     color = subTextColor,
                                     lineHeight = 17.sp
                                 )
+
+                                if (latValue != null && lngValue != null) {
+                                    Text(
+                                        text = "✓ تم حفظ الموقع: ${"%.5f".format(latValue)}, ${"%.5f".format(lngValue)}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF16A34A)
+                                    )
+                                }
+                                if (!addressValue.isNullOrBlank()) {
+                                    Text(
+                                        text = "✓ العنوان: $addressValue",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF16A34A)
+                                    )
+                                }
+
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Button(
-                                        onClick = { Toast.makeText(context, "تم تحديد الموقع عبر GPS بنجاح", Toast.LENGTH_SHORT).show() },
+                                        onClick = {
+                                            val hasPermission =
+                                                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                                                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                                            if (hasPermission) {
+                                                startLocating()
+                                            } else {
+                                                permissionLauncher.launch(
+                                                    arrayOf(
+                                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                                                    )
+                                                )
+                                            }
+                                        },
+                                        enabled = !isLocating,
                                         colors = ButtonDefaults.buttonColors(containerColor = ShopBlueAccent),
                                         modifier = Modifier.weight(1f)
                                     ) {
                                         Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("تحديد عبر GPS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                        Text(
+                                            text = if (isLocating) "جاري التحديد..." else "تحديد عبر GPS",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
                                     }
 
                                     OutlinedButton(
-                                        onClick = { Toast.makeText(context, "إدخال يدوي للموقع", Toast.LENGTH_SHORT).show() },
+                                        onClick = {
+                                            manualAddressText = addressValue ?: ""
+                                            showManualDialog = true
+                                        },
                                         modifier = Modifier.weight(1f),
                                         colors = ButtonDefaults.outlinedButtonColors(contentColor = textColor),
                                         border = BorderStroke(1.dp, borderColor)
@@ -1212,7 +1456,7 @@ fun AddScreen(
                     Button(
                         onClick = {
                             if (titleText.isNotBlank() && phoneText.isNotBlank()) {
-                                onAddSubmit(titleText, cityText, phoneText, detailsText, selectedType, null, null, null)
+                                onAddSubmit(titleText, cityText, phoneText, detailsText, selectedType, latValue, lngValue, addressValue)
                             } else {
                                 Toast.makeText(context, "يرجى ملء جميع الحقول المطلوبة (*)", Toast.LENGTH_SHORT).show()
                             }
@@ -1228,6 +1472,44 @@ fun AddScreen(
                 }
             }
         }
+    }
+
+    if (showManualDialog) {
+        AlertDialog(
+            onDismissRequest = { showManualDialog = false },
+            title = { Text("عنوان المحل", fontWeight = FontWeight.Bold, color = textColor) },
+            text = {
+                OutlinedTextField(
+                    value = manualAddressText,
+                    onValueChange = { manualAddressText = it },
+                    label = { Text("مثال: شارع محمد الخامس، المعاريف، الدار البيضاء", color = subTextColor) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = textColor,
+                        unfocusedTextColor = textColor,
+                        focusedBorderColor = ShopBlueDarkPrimary,
+                        unfocusedBorderColor = borderColor
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        addressValue = manualAddressText.trim().ifBlank { null }
+                        showManualDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = ShopBlueDarkPrimary)
+                ) {
+                    Text("حفظ", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showManualDialog = false }) {
+                    Text("إلغاء", color = textColor, fontWeight = FontWeight.Bold)
+                }
+            },
+            containerColor = if (isDarkMode) NavyPrimary else Color.White
+        )
     }
 }
 
