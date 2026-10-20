@@ -6,7 +6,6 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,7 +29,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -442,21 +440,19 @@ fun NativeHomeScreenNew(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Box(
-    modifier = Modifier
-        .size(48.dp)
-        .clip(RoundedCornerShape(12.dp))
-        .background(activeColor),
-    contentAlignment = Alignment.Center
-) {
-    Image(
-        painter = painterResource(id = R.mipmap.ic_launcher),
-        contentDescription = "LIVLINK Logo",
-        modifier = Modifier
-            .fillMaxSize()
-            .clip(RoundedCornerShape(12.dp)),
-        contentScale = ContentScale.Fit
-    )
-}
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(activeColor),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "LV",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 20.sp,
+                                        color = Color.White
+                                    )
+                                }
                             }
 
                             AmazonStyleLivlinkHeader(activeColor = activeColor)
