@@ -1,6 +1,5 @@
 package com.example
 
-import androidx.compose.foundation.Image
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -1146,7 +1145,6 @@ fun AddScreen(
                             .height(100.dp)
                     )
 
-                    // إخفاء بطاقة تحديد موقع الخريطة تماماً إذا كان وضع الليفرور أوالنوع المحدد "عرض توصيل"
                     if (!isDriver && selectedType == "طلب توصيل") {
                         Card(
                             modifier = Modifier
