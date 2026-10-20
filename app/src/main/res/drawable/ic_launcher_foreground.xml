@@ -1,26 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- Red rounded shield/badge -->
-    <path
-        android:fillColor="#D32F2F"
-        android:pathData="M30,30h48c4.4,0 8,3.6 8,8v32c0,4.4 -3.6,8 -8,8h-48c-4.4,0 -8,-3.6 -8,-8v-32c0,-4.4 3.6,-8 8,-8z" />
-
-    <!-- Gold accent speed line -->
-    <path
-        android:fillColor="#F59E0B"
-        android:pathData="M26,52h8v4h-8zM22,58h12v4h-12z" />
-
-    <!-- Stylized 'L' in White -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M38,40h6v22h12v6h-18z" />
-
-    <!-- Stylized 'V' in White -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M58,40h6l6,21l6,-21h6l-9,28h-6z" />
-</vector>
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@mipmap/ic_launcher"
+    android:gravity="center"/>
