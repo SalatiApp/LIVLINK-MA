@@ -2198,6 +2198,31 @@ fun DriversTabContent(
     }
 }
 
+// خانة معلومات للقراءة فقط، بنفس شكل OutlinedTextField ديال الاستمارة
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileInfoField(
+    label: String,
+    value: String,
+    valueColor: Color,
+    labelColor: Color,
+    borderColor: Color
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = {},
+        enabled = false,
+        singleLine = true,
+        label = { Text(label, color = labelColor) },
+        colors = OutlinedTextFieldDefaults.colors(
+            disabledTextColor = valueColor,
+            disabledBorderColor = borderColor,
+            disabledLabelColor = labelColor
+        ),
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
 @Composable
 fun ProfileTabContent(
     isDriver: Boolean,
@@ -2304,41 +2329,11 @@ fun ProfileTabContent(
 
                     Divider(color = borderColor)
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "الاسم المعتمد في المنصة:", fontSize = 13.sp, color = subTextColor)
-                        Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "رقم الهاتف للتواصل المباشر:", fontSize = 13.sp, color = subTextColor)
-                        Text(text = userPhone, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "المدينة المحددة حالياً:", fontSize = 13.sp, color = subTextColor)
-                        Text(text = selectedCity, fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = textColor)
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = "نموذج الاستخدام المعتمد:", fontSize = 13.sp, color = subTextColor)
-                        Text(text = "تطبيق مجاني 100%", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFF16A34A))
-                    }
+                    // نفس شكل خانات الاستمارة (تعديل الملف الشخصي)
+                    ProfileInfoField(label = "الاسم المعتمد في المنصة", value = userName, valueColor = textColor, labelColor = subTextColor, borderColor = borderColor)
+                    ProfileInfoField(label = "رقم الهاتف للتواصل المباشر", value = userPhone, valueColor = textColor, labelColor = subTextColor, borderColor = borderColor)
+                    ProfileInfoField(label = "المدينة المحددة حالياً", value = selectedCity, valueColor = textColor, labelColor = subTextColor, borderColor = borderColor)
+                    ProfileInfoField(label = "نموذج الاستخدام المعتمد", value = "تطبيق مجاني 100%", valueColor = Color(0xFF16A34A), labelColor = subTextColor, borderColor = borderColor)
                 }
             }
         }
@@ -2425,7 +2420,7 @@ fun ProfileTabContent(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 2.sp,
-                    color = activeColor,
+                    color = textColor,
                     textAlign = TextAlign.Center
                 )
             }
