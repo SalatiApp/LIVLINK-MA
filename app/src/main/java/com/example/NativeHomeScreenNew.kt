@@ -660,6 +660,8 @@ fun NativeHomeScreenNew(
         if (showEditProfileDialog) {
             var editName by remember { mutableStateOf(profileName) }
             var editPhone by remember { mutableStateOf(profilePhone) }
+            var editCity by remember { mutableStateOf(selectedCity) }
+            var editCityExpanded by remember { mutableStateOf(false) }
             AlertDialog(
                 onDismissRequest = { showEditProfileDialog = false },
                 title = { Text("تعديل الملف الشخصي", fontWeight = FontWeight.Bold, color = textColor) },
@@ -694,6 +696,53 @@ fun NativeHomeScreenNew(
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
+
+                        // المدينة (فيها خيار "جميع مدن المغرب" + كل المدن)
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = editCity,
+                                onValueChange = {},
+                                readOnly = true,
+                                singleLine = true,
+                                label = { Text("المدينة", color = subTextColor) },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        tint = textColor
+                                    )
+                                },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = textColor,
+                                    unfocusedTextColor = textColor,
+                                    focusedBorderColor = activeColor,
+                                    unfocusedBorderColor = borderColor,
+                                    focusedLabelColor = activeColor
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            // طبقة شفافة باش الضغط على الخانة كله يفتح اللائحة
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable { editCityExpanded = true }
+                            )
+                            DropdownMenu(
+                                expanded = editCityExpanded,
+                                onDismissRequest = { editCityExpanded = false },
+                                modifier = Modifier.heightIn(max = 320.dp)
+                            ) {
+                                MOROCCAN_CITIES.forEach { city ->
+                                    DropdownMenuItem(
+                                        text = { Text(city, fontSize = 13.sp, fontWeight = FontWeight.Bold) },
+                                        onClick = {
+                                            editCity = city
+                                            editCityExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 },
                 confirmButton = {
@@ -704,6 +753,10 @@ fun NativeHomeScreenNew(
                             } else {
                                 profileName = editName.trim()
                                 profilePhone = editPhone.trim()
+                                if (editCity != selectedCity) {
+                                    selectedCity = editCity
+                                    selectedDistrict = "اختر الحي"
+                                }
                                 context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
                                     .edit()
                                     .putString("profile_name", profileName)
