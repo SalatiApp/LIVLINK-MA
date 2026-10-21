@@ -527,7 +527,7 @@ fun AmazonStyleLivlinkHeader(
 
         Text(
             text = "منصة ربط المحلات بالليفرورات",
-            fontSize = 13.sp,
+            fontSize = 15.sp,
             color = Color.White,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -784,7 +784,9 @@ fun NativeHomeScreenNew(
                             // الشعار
                             AmazonStyleLivlinkHeader(
                                 activeColor = activeColor,
-                                modifier = Modifier.weight(1f, fill = false)
+                                modifier = Modifier
+                                    .weight(1f, fill = false)
+                                    .padding(horizontal = 4.dp)
                             )
 
                             // وضع صاحب المحل  ⟷  رمز الربط  ⟷  وضع الليفرور
