@@ -464,69 +464,43 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
     }
 }
 
-// زر الوضع الليلي/النهاري بشكل كبسولة: نصف نهار (شمس) ونصف ليل (قمر ونجوم)
+// زر الوضع الليلي/النهاري: دائرة بنفس ستايل باقي الأيقونات، فيها شمس وقمر مع بعض
 @Composable
 fun DayNightToggle(
     isDarkMode: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pillShape = RoundedCornerShape(50)
-    // الترتيب ثابت: الشمس يسار والقمر يمين (بغض النظر عن اتجاه الشاشة RTL)
+    // الترتيب ثابت (الشمس فوق اليسار والقمر تحت اليمين) بغض النظر عن RTL
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Row(
+        Box(
             modifier = modifier
-                .width(60.dp)
-                .height(34.dp)
-                .clip(pillShape)
-                .border(1.5.dp, Color(0xFFE2E8F0), pillShape)
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF1E293B))
+                .border(1.dp, Color(0xFF475569), CircleShape)
                 .clickable(onClickLabel = "تغيير الوضع", onClick = onClick)
         ) {
-            // نصف النهار
-            Box(
+            Icon(
+                imageVector = Icons.Default.LightMode,
+                contentDescription = "الوضع النهاري",
+                tint = DriverOrangePrimary,
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(Color(0xFFF8FAFC)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.LightMode,
-                    contentDescription = "الوضع النهاري",
-                    tint = Color(0xFFF59E0B),
-                    modifier = Modifier
-                        .size(19.dp)
-                        .alpha(if (isDarkMode) 0.45f else 1f)
-                )
-            }
-
-            // نصف الليل
-            Box(
+                    .align(Alignment.TopStart)
+                    .padding(start = 5.dp, top = 5.dp)
+                    .size(15.dp)
+                    .alpha(if (isDarkMode) 0.4f else 1f)
+            )
+            Icon(
+                imageVector = Icons.Default.DarkMode,
+                contentDescription = "الوضع الليلي",
+                tint = Color(0xFF93C5FD),
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(Color(0xFF2F3E5C)),
-                contentAlignment = Alignment.Center
-            ) {
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .alpha(if (isDarkMode) 1f else 0.45f)
-                ) {
-                    val r = 1.1.dp.toPx()
-                    drawCircle(Color.White, radius = r, center = Offset(size.width * 0.80f, size.height * 0.27f))
-                    drawCircle(Color.White, radius = r * 0.8f, center = Offset(size.width * 0.78f, size.height * 0.74f))
-                    drawCircle(Color.White, radius = r * 0.7f, center = Offset(size.width * 0.22f, size.height * 0.24f))
-                }
-                Icon(
-                    imageVector = Icons.Default.DarkMode,
-                    contentDescription = "الوضع الليلي",
-                    tint = Color(0xFFF5DEB3),
-                    modifier = Modifier
-                        .size(18.dp)
-                        .alpha(if (isDarkMode) 1f else 0.45f)
-                )
-            }
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 5.dp, bottom = 5.dp)
+                    .size(15.dp)
+                    .alpha(if (isDarkMode) 1f else 0.4f)
+            )
         }
     }
 }
