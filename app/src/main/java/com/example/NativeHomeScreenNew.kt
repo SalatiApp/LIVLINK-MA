@@ -39,6 +39,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -463,11 +464,81 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
     }
 }
 
+// زر الوضع الليلي/النهاري بشكل كبسولة: نصف نهار (شمس) ونصف ليل (قمر ونجوم)
 @Composable
-fun AmazonStyleLivlinkHeader(activeColor: Color) {
+fun DayNightToggle(
+    isDarkMode: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val pillShape = RoundedCornerShape(50)
+    // الترتيب ثابت: الشمس يسار والقمر يمين (بغض النظر عن اتجاه الشاشة RTL)
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Row(
+            modifier = modifier
+                .width(60.dp)
+                .height(34.dp)
+                .clip(pillShape)
+                .border(1.5.dp, Color(0xFFE2E8F0), pillShape)
+                .clickable(onClickLabel = "تغيير الوضع", onClick = onClick)
+        ) {
+            // نصف النهار
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(Color(0xFFF8FAFC)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LightMode,
+                    contentDescription = "الوضع النهاري",
+                    tint = Color(0xFFF59E0B),
+                    modifier = Modifier
+                        .size(19.dp)
+                        .alpha(if (isDarkMode) 0.45f else 1f)
+                )
+            }
+
+            // نصف الليل
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(Color(0xFF2F3E5C)),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(if (isDarkMode) 1f else 0.45f)
+                ) {
+                    val r = 1.1.dp.toPx()
+                    drawCircle(Color.White, radius = r, center = Offset(size.width * 0.80f, size.height * 0.27f))
+                    drawCircle(Color.White, radius = r * 0.8f, center = Offset(size.width * 0.78f, size.height * 0.74f))
+                    drawCircle(Color.White, radius = r * 0.7f, center = Offset(size.width * 0.22f, size.height * 0.24f))
+                }
+                Icon(
+                    imageVector = Icons.Default.DarkMode,
+                    contentDescription = "الوضع الليلي",
+                    tint = Color(0xFFF5DEB3),
+                    modifier = Modifier
+                        .size(18.dp)
+                        .alpha(if (isDarkMode) 1f else 0.45f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AmazonStyleLivlinkHeader(
+    activeColor: Color,
+    modifier: Modifier = Modifier
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
     ) {
         Text(
             text = "LIVLINK",
@@ -478,45 +549,12 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.width(128.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Store,
-                contentDescription = "محل",
-                tint = activeColor,
-                modifier = Modifier.size(17.dp)
-            )
-
-            // الطريق اللي كيربط بين المحل والليفرور (واصل للأيقونتين)
-            // الصورة: res/drawable/livlink_arrow.png (مقصوصة بلا فراغات، نسبتها 2.98 : 1)
-            Image(
-                painter = painterResource(id = R.drawable.livlink_arrow),
-                contentDescription = "ربط بين المحل والليفرور",
-                contentScale = ContentScale.FillBounds,
-                modifier = Modifier
-                    .weight(1f)          // كياخد كل العرض بين الأيقونتين
-                    .aspectRatio(2.98f)  // الطول كيتحسب بوحدو (بلا تشويه)
-            )
-
-            Icon(
-                painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
-                contentDescription = "دراجة نارية",
-                tint = DriverOrangePrimary,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(3.dp))
 
         Text(
             text = "منصة ربط المحلات بالليفرورات",
-            fontSize = 11.sp,
-            color = Color.White.copy(alpha = 0.9f),
+            fontSize = 13.sp,
+            color = Color.White,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             maxLines = 1,
@@ -763,26 +801,17 @@ fun NativeHomeScreenNew(
                                 )
                             }
 
-                            // الوضع الليلي
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF1E293B))
-                                    .border(1.dp, Color(0xFF475569), CircleShape)
-                                    .clickable { onToggleDarkMode() },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                    contentDescription = "تغيير الوضع",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                            // الوضع الليلي (كبسولة شمس / قمر)
+                            DayNightToggle(
+                                isDarkMode = isDarkMode,
+                                onClick = { onToggleDarkMode() }
+                            )
 
                             // الشعار
-                            AmazonStyleLivlinkHeader(activeColor = activeColor)
+                            AmazonStyleLivlinkHeader(
+                                activeColor = activeColor,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
 
                             // وضع صاحب المحل  ⟷  رمز الربط  ⟷  وضع الليفرور
                             Row(verticalAlignment = Alignment.CenterVertically) {
