@@ -492,16 +492,15 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
                 modifier = Modifier.size(17.dp)
             )
 
-            // السهم (طريق) اللي كيربط بين المحل والليفرور
-            // الصورة: res/drawable/livlink_arrow.png
+            // الطريق اللي كيربط بين المحل والليفرور (واصل للأيقونتين)
+            // الصورة: res/drawable/livlink_arrow.png (مقصوصة بلا فراغات، نسبتها 2.98 : 1)
             Image(
                 painter = painterResource(id = R.drawable.livlink_arrow),
                 contentDescription = "ربط بين المحل والليفرور",
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.FillBounds,
                 modifier = Modifier
-                    .weight(1f)
-                    .height(22.dp)
-                    .padding(horizontal = 4.dp)
+                    .weight(1f)          // كياخد كل العرض بين الأيقونتين
+                    .aspectRatio(2.98f)  // الطول كيتحسب بوحدو (بلا تشويه)
             )
 
             Icon(
