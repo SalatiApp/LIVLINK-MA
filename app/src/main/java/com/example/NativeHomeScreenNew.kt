@@ -516,7 +516,7 @@ fun AmazonStyleLivlinkHeader(
     ) {
         Text(
             text = "LIVLINK",
-            fontSize = 24.sp,
+            fontSize = 30.sp,
             fontWeight = FontWeight.Black,
             color = Color.White,
             letterSpacing = 1.5.sp,
@@ -2340,6 +2340,94 @@ fun ProfileTabContent(
                         Text(text = "تطبيق مجاني 100%", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = Color(0xFF16A34A))
                     }
                 }
+            }
+        }
+
+        // ترخيص التطبيق + توقيع المطوّر (آخر صفحة حسابي)
+        item {
+            val currentYear = remember { java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, bottom = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // خط فاصل بألوان المنصة (أزرق ← برتقالي)
+                Box(
+                    modifier = Modifier
+                        .width(56.dp)
+                        .height(3.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Brush.horizontalGradient(listOf(ShopBlueAccent, DriverOrangePrimary)))
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Image(
+                    painter = painterResource(id = R.drawable.livlink_logo),
+                    contentDescription = "LIVLINK",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(NavyPrimary)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "LIVLINK",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.sp,
+                    color = textColor
+                )
+                Text(
+                    text = "منصة ربط المحلات بالليفرورات",
+                    fontSize = 12.sp,
+                    color = subTextColor,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = "© $currentYear LIVLINK. جميع الحقوق محفوظة.",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "هذا التطبيق، بما في ذلك تصميمه وشعاره وشفرته البرمجية ومحتوياته، محمي بموجب قوانين حقوق المؤلف والملكية الفكرية. يُمنع نسخ أي جزء منه أو توزيعه أو تعديله أو إعادة استخدامه دون إذن كتابي مسبق من المطوّر.",
+                    fontSize = 11.sp,
+                    lineHeight = 17.sp,
+                    color = subTextColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 10.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "تصميم وبرمجة",
+                    fontSize = 11.sp,
+                    color = subTextColor,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "MOHAMED HARBAJ",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 2.sp,
+                    color = activeColor,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
