@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -482,60 +483,32 @@ fun AmazonStyleLivlinkHeader(activeColor: Color) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.width(116.dp)
+            modifier = Modifier.width(128.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Store,
                 contentDescription = "محل",
                 tint = activeColor,
-                modifier = Modifier.size(15.dp)
+                modifier = Modifier.size(17.dp)
             )
 
-            Canvas(
+            // السهم (طريق) اللي كيربط بين المحل والليفرور
+            // الصورة: res/drawable/livlink_arrow.png
+            Image(
+                painter = painterResource(id = R.drawable.livlink_arrow),
+                contentDescription = "ربط بين المحل والليفرور",
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .weight(1f)
-                    .height(12.dp)
-                    .padding(horizontal = 3.dp)
-            ) {
-                val path = Path().apply {
-                    moveTo(size.width, 2f)
-                    cubicTo(
-                        size.width * 0.7f, size.height * 1.2f,
-                        size.width * 0.3f, size.height * 1.2f,
-                        0f, 2f
-                    )
-                }
-
-                drawPath(
-                    path = path,
-                    color = Color(0xFF334155),
-                    style = Stroke(width = 7f, cap = StrokeCap.Round)
-                )
-
-                drawPath(
-                    path = path,
-                    color = Color.White,
-                    style = Stroke(
-                        width = 2.5f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 3f), 0f),
-                        cap = StrokeCap.Round
-                    )
-                )
-
-                val arrowPath = Path().apply {
-                    moveTo(0f, 2f)
-                    lineTo(8f, -2f)
-                    lineTo(7f, 6f)
-                    close()
-                }
-                drawPath(arrowPath, color = activeColor)
-            }
+                    .height(22.dp)
+                    .padding(horizontal = 4.dp)
+            )
 
             Icon(
                 painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
                 contentDescription = "دراجة نارية",
                 tint = DriverOrangePrimary,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(18.dp)
             )
         }
 
@@ -768,10 +741,17 @@ fun NativeHomeScreenNew(
                             // أيقونة التطبيق (بدل LV)
                             Box(
                                 modifier = Modifier
-                                    .size(50.dp)
-                                    .clip(RoundedCornerShape(14.dp))
+                                    .size(62.dp)
+                                    .clip(RoundedCornerShape(18.dp))
                                     // نفس لون الشريط: خلفية الشعار تتحكم فيها الصورة نفسها
-                                    .background(NavyPrimary),
+                                    .background(NavyPrimary)
+                                    .border(
+                                        width = 1.5.dp,
+                                        brush = Brush.linearGradient(
+                                            listOf(ShopBlueAccent, DriverOrangePrimary)
+                                        ),
+                                        shape = RoundedCornerShape(18.dp)
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Image(
@@ -780,7 +760,7 @@ fun NativeHomeScreenNew(
                                     contentScale = ContentScale.Fit,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .padding(4.dp)
+                                        .padding(3.dp)
                                 )
                             }
 
@@ -805,54 +785,94 @@ fun NativeHomeScreenNew(
                             // الشعار
                             AmazonStyleLivlinkHeader(activeColor = activeColor)
 
-                            // وضع صاحب المحل
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(if (!isDriver) ShopBlueDarkPrimary else Color(0xFF1E293B))
-                                    .border(
-                                        width = 1.5.dp,
-                                        color = if (!isDriver) Color(0xFF93C5FD) else Color(0xFF334155),
-                                        shape = CircleShape
+                            // وضع صاحب المحل  ⟷  رمز الربط  ⟷  وضع الليفرور
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                // وضع صاحب المحل
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(if (!isDriver) ShopBlueDarkPrimary else Color(0xFF1E293B))
+                                        .border(
+                                            width = 1.5.dp,
+                                            color = if (!isDriver) Color(0xFF93C5FD) else Color(0xFF334155),
+                                            shape = CircleShape
+                                        )
+                                        .clickable {
+                                            onRoleChange("صاحب محل")
+                                            Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل", Toast.LENGTH_SHORT).show()
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Store,
+                                        contentDescription = "وضع صاحب المحل",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
                                     )
-                                    .clickable {
-                                        onRoleChange("صاحب محل")
-                                        Toast.makeText(context, "تم التبديل إلى وضع صاحب المحل", Toast.LENGTH_SHORT).show()
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Store,
-                                    contentDescription = "وضع صاحب المحل",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
+                                }
 
-                            // وضع الليفرور
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isDriver) DriverOrangePrimary else Color(0xFF1E293B))
-                                    .border(
-                                        width = 1.5.dp,
-                                        color = if (isDriver) Color(0xFFFED7AA) else Color(0xFF334155),
-                                        shape = CircleShape
+                                // رمز الربط (Link) بين وضع المحل ووضع الليفرور
+                                Box(
+                                    modifier = Modifier
+                                        .width(30.dp)
+                                        .height(38.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+                                    // الخط كيمشي من لون المحل (أزرق) للون الليفرور (برتقالي) حسب اتجاه الشاشة
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(2.dp)
+                                            .background(
+                                                Brush.horizontalGradient(
+                                                    if (isRtl) listOf(DriverOrangePrimary, ShopBlueAccent)
+                                                    else listOf(ShopBlueAccent, DriverOrangePrimary)
+                                                )
+                                            )
                                     )
-                                    .clickable {
-                                        onRoleChange("ليفرور")
-                                        Toast.makeText(context, "تم التبديل إلى وضع سائق التوصيل", Toast.LENGTH_SHORT).show()
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
-                                    contentDescription = "وضع سائق التوصيل",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clip(CircleShape)
+                                            .background(NavyPrimary)
+                                            .border(1.dp, Color(0xFF64748B), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Link,
+                                            contentDescription = "ربط بين المحل والليفرور",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                }
+
+                                // وضع الليفرور
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isDriver) DriverOrangePrimary else Color(0xFF1E293B))
+                                        .border(
+                                            width = 1.5.dp,
+                                            color = if (isDriver) Color(0xFFFED7AA) else Color(0xFF334155),
+                                            shape = CircleShape
+                                        )
+                                        .clickable {
+                                            onRoleChange("ليفرور")
+                                            Toast.makeText(context, "تم التبديل إلى وضع سائق التوصيل", Toast.LENGTH_SHORT).show()
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_delivery_motorcycle_box),
+                                        contentDescription = "وضع سائق التوصيل",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             }
                         }
 
