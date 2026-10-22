@@ -1,6 +1,0 @@
-{
-  "name": "LIVLINK",
-  "description": "منصة ربط المحلات بالليفرورات — منصة وطنية مغربية مجانية 100٪ لربط أصحاب المحلات بالليفرورات وتسهيل التواصل والتعاون في مجال التوصيل بجميع مدن المغرب.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
