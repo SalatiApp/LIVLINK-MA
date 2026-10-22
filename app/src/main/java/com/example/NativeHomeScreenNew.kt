@@ -252,6 +252,7 @@ val CITY_DISTRICTS_MAP = mapOf(
 
 // مدة صلاحية الإعلان: 7 أيام، من بعدها كيتحيد تلقائياً
 const val OFFER_TTL_MS = 7L * 24 * 60 * 60 * 1000
+const val MAX_ADS_PER_USER = 5
 
 // رقم مغربي صحيح: 06/07/05 xxxxxxxx ولا +212 / 00212 قبلهم
 fun isValidMoroccanPhone(raw: String): Boolean {
@@ -279,9 +280,6 @@ fun relativeTimeArabic(createdAt: Long, fallback: String): String {
     }
 }
 
-private fun isFresh(createdAt: Long): Boolean =
-    createdAt <= 0L || System.currentTimeMillis() - createdAt <= OFFER_TTL_MS
-
 data class DeliveryOffer(
     val id: String,
     val title: String,
@@ -296,7 +294,8 @@ data class DeliveryOffer(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val locationAddress: String? = null,
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
+    val ownerId: String = ""
 )
 
 data class DriverProfile(
@@ -392,116 +391,6 @@ fun openLocationInGoogleMaps(context: Context, lat: Double, lng: Double, label: 
         } catch (e2: Exception) {
             Toast.makeText(context, "الموقع: $lat, $lng", Toast.LENGTH_LONG).show()
         }
-    }
-}
-
-fun saveOffersToPrefs(context: Context, offers: List<DeliveryOffer>) {
-    try {
-        val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
-        val jsonArr = org.json.JSONArray()
-        for (offer in offers) {
-            val obj = org.json.JSONObject()
-            obj.put("id", offer.id)
-            obj.put("title", offer.title)
-            obj.put("city", offer.city)
-            obj.put("district", offer.district)
-            obj.put("roleType", offer.roleType)
-            obj.put("phone", offer.phone)
-            obj.put("timeAgo", offer.timeAgo)
-            obj.put("createdAt", offer.createdAt)
-            obj.put("details", offer.details)
-            obj.put("vehicleType", offer.vehicleType)
-            obj.put("priceEstimate", offer.priceEstimate)
-            if (offer.latitude != null) obj.put("latitude", offer.latitude)
-            if (offer.longitude != null) obj.put("longitude", offer.longitude)
-            if (offer.locationAddress != null) obj.put("locationAddress", offer.locationAddress)
-            jsonArr.put(obj)
-        }
-        prefs.edit().putString("saved_offers_json", jsonArr.toString()).apply()
-    } catch (e: Exception) {}
-}
-
-fun loadOffersFromPrefs(context: Context): List<DeliveryOffer>? {
-    return try {
-        val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
-        val jsonStr = prefs.getString("saved_offers_json", null) ?: return null
-        val jsonArr = org.json.JSONArray(jsonStr)
-        val list = mutableListOf<DeliveryOffer>()
-        for (i in 0 until jsonArr.length()) {
-            val obj = jsonArr.getJSONObject(i)
-            list.add(
-                DeliveryOffer(
-                    id = obj.optString("id", System.currentTimeMillis().toString()),
-                    title = obj.optString("title", ""),
-                    city = obj.optString("city", "الدار البيضاء"),
-                    district = obj.optString("district", "اختر الحي"),
-                    roleType = obj.optString("roleType", "طلب توصيل"),
-                    phone = obj.optString("phone", ""),
-                    timeAgo = obj.optString("timeAgo", "مؤخراً"),
-                    details = obj.optString("details", ""),
-                    vehicleType = obj.optString("vehicleType", "دراجة نارية"),
-                    priceEstimate = obj.optString("priceEstimate", "حسب الاتفاق"),
-                    latitude = if (obj.has("latitude") && !obj.isNull("latitude")) obj.optDouble("latitude") else null,
-                    longitude = if (obj.has("longitude") && !obj.isNull("longitude")) obj.optDouble("longitude") else null,
-                    locationAddress = if (obj.has("locationAddress") && !obj.isNull("locationAddress")) obj.optString("locationAddress") else null,
-                    createdAt = obj.optLong("createdAt", obj.optString("id", "").toLongOrNull() ?: 0L)
-                )
-            )
-        }
-        val fresh = list.filter { isFresh(it.createdAt) }
-        if (fresh.isNotEmpty()) fresh else null
-    } catch (e: Exception) {
-        null
-    }
-}
-
-fun saveDriversToPrefs(context: Context, drivers: List<DriverProfile>) {
-    try {
-        val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
-        val jsonArr = org.json.JSONArray()
-        for (driver in drivers) {
-            val obj = org.json.JSONObject()
-            obj.put("id", driver.id)
-            obj.put("name", driver.name)
-            obj.put("city", driver.city)
-            obj.put("vehicle", driver.vehicle)
-            obj.put("phone", driver.phone)
-            obj.put("isAvailable", driver.isAvailable)
-            obj.put("experience", driver.experience)
-            obj.put("completedTrips", driver.completedTrips)
-            obj.put("createdAt", driver.createdAt)
-            jsonArr.put(obj)
-        }
-        prefs.edit().putString("saved_drivers_json", jsonArr.toString()).apply()
-    } catch (e: Exception) {}
-}
-
-fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
-    return try {
-        val prefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
-        val jsonStr = prefs.getString("saved_drivers_json", null) ?: return null
-        val jsonArr = org.json.JSONArray(jsonStr)
-        val list = mutableListOf<DriverProfile>()
-        for (i in 0 until jsonArr.length()) {
-            val obj = jsonArr.getJSONObject(i)
-            list.add(
-                DriverProfile(
-                    id = obj.optString("id", System.currentTimeMillis().toString()),
-                    name = obj.optString("name", ""),
-                    city = obj.optString("city", "الدار البيضاء"),
-                    vehicle = obj.optString("vehicle", "دراجة نارية مع صندوق"),
-                    phone = obj.optString("phone", ""),
-                    isAvailable = obj.optBoolean("isAvailable", true),
-                    experience = obj.optString("experience", "سائق متاح للتوصيل"),
-                    completedTrips = obj.optInt("completedTrips", 0),
-                    createdAt = obj.optLong("createdAt", obj.optString("id", "").removePrefix("d_").toLongOrNull() ?: 0L)
-                )
-            )
-        }
-        val fresh = list.filter { isFresh(it.createdAt) }
-        if (fresh.isNotEmpty()) fresh else null
-    } catch (e: Exception) {
-        null
     }
 }
 
@@ -623,19 +512,54 @@ fun NativeHomeScreenNew(
             )
         }
 
-        val offersList = remember {
-            val saved = loadOffersFromPrefs(context)
-            mutableStateListOf<DeliveryOffer>().apply {
-                addAll(saved ?: emptyList())
+        // الإعلانات كتجي من Firestore (كيبانو لكاع المستخدمين). دخول مجهول تلقائي.
+        val offersList = remember { mutableStateListOf<DeliveryOffer>() }
+        var cloudUid by remember { mutableStateOf(CloudRepo.uid) }
+        var cloudError by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            CloudRepo.ensureSignedIn { uid ->
+                cloudUid = uid
+                if (uid == null) cloudError = true
             }
         }
 
-        val driversList = remember {
-            val saved = loadDriversFromPrefs(context)
-            mutableStateListOf<DriverProfile>().apply {
-                addAll(saved ?: emptyList())
+        DisposableEffect(cloudUid, selectedCity) {
+            var registration: com.google.firebase.firestore.ListenerRegistration? = null
+            if (cloudUid != null) {
+                registration = CloudRepo.listenAds(
+                    city = selectedCity,
+                    onChange = { list ->
+                        cloudError = false
+                        offersList.clear()
+                        offersList.addAll(list)
+                    },
+                    onError = { cloudError = true }
+                )
             }
+            onDispose { registration?.remove() }
         }
+
+        LaunchedEffect(cloudError) {
+            if (cloudError) Toast.makeText(context, "تعذر الاتصال بالسيرفر. تأكد من الأنترنيت.", Toast.LENGTH_LONG).show()
+        }
+
+        // قائمة الليفرورات كتتبني من إعلانات "عرض توصيل"
+        val driversList = offersList
+            .filter { it.roleType == "عرض توصيل" }
+            .map { offer ->
+                DriverProfile(
+                    id = "d_${offer.id}",
+                    name = if (offer.title.contains("-")) offer.title.substringBefore("-").trim() else offer.title,
+                    city = offer.city,
+                    vehicle = offer.vehicleType,
+                    phone = offer.phone,
+                    isAvailable = true,
+                    experience = "سائق متاح للتوصيل",
+                    completedTrips = 0,
+                    createdAt = offer.createdAt
+                )
+            }
 
         fun dialPhone(phoneNumber: String) {
             val clean = phoneNumber.filter { it.isDigit() || it == '+' }
@@ -1276,9 +1200,19 @@ fun NativeHomeScreenNew(
                                 title
                             }
 
+                            val uid = cloudUid
+                            if (uid == null) {
+                                Toast.makeText(context, "ما كاينش اتصال بالسيرفر. تأكد من الأنترنيت وعاود.", Toast.LENGTH_LONG).show()
+                                return@AddScreen
+                            }
+                            if (offersList.count { it.ownerId == uid } >= MAX_ADS_PER_USER) {
+                                Toast.makeText(context, "وصلتي للحد الأقصى ($MAX_ADS_PER_USER إعلانات). احذف إعلان قديم باش تنشر جديد.", Toast.LENGTH_LONG).show()
+                                return@AddScreen
+                            }
+
                             val createdAt = System.currentTimeMillis()
                             val newOffer = DeliveryOffer(
-                                id = createdAt.toString(),
+                                id = CloudRepo.newId(),
                                 title = title,
                                 city = city,
                                 district = district,
@@ -1291,25 +1225,11 @@ fun NativeHomeScreenNew(
                                 latitude = lat,
                                 longitude = lng,
                                 locationAddress = address,
-                                createdAt = createdAt
+                                createdAt = createdAt,
+                                ownerId = uid
                             )
-                            offersList.add(0, newOffer)
-                            saveOffersToPrefs(context, offersList.toList())
-
-                            if (type == "عرض توصيل") {
-                                val newDriver = DriverProfile(
-                                    id = "d_$createdAt",
-                                    name = cleanName,
-                                    city = city,
-                                    vehicle = cleanVehicle,
-                                    phone = phone,
-                                    isAvailable = true,
-                                    experience = "سائق متاح للتوصيل",
-                                    completedTrips = 0,
-                                    createdAt = createdAt
-                                )
-                                driversList.add(0, newDriver)
-                                saveDriversToPrefs(context, driversList.toList())
+                            CloudRepo.publish(newOffer) { ok ->
+                                if (!ok) Toast.makeText(context, "تعذر نشر الإعلان. عاود المحاولة.", Toast.LENGTH_LONG).show()
                             }
 
                             if (selectedCity != "جميع مدن المغرب" && selectedCity != city) {
@@ -1317,7 +1237,7 @@ fun NativeHomeScreenNew(
                                 selectedDistrict = "اختر الحي"
                             }
 
-                            Toast.makeText(context, "تم حفظ إعلانك على هذا الهاتف ($city)", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "تم نشر إعلانك ($city)", Toast.LENGTH_LONG).show()
                             currentTab = 1
                         }
                     )
@@ -1362,11 +1282,13 @@ fun NativeHomeScreenNew(
                                 Text(text = "المدينة والحي: ${offer.city} • ${offer.district}", fontSize = 12.5.sp, color = dialogText)
                                 Text(text = "تفاصيل الإعلان: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp, color = dialogText)
                                 Text(text = "رقم الهاتف: ${offer.phone}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = dialogText)
-                                // دابا كاع الإعلانات محفوظة فهاد الهاتف، يعني ديالك. مع Firebase غادي نزيدو شرط الملكية.
-                                TextButton(onClick = { offerToDelete = offer }) {
-                                    Icon(imageVector = Icons.Default.Delete, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("حذف هذا الإعلان", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                                // الحذف كيبان غير لصاحب الإعلان (وقواعد Firestore كتحميه فالسيرفر)
+                                if (offer.ownerId.isNotEmpty() && offer.ownerId == cloudUid) {
+                                    TextButton(onClick = { offerToDelete = offer }) {
+                                        Icon(imageVector = Icons.Default.Delete, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("حذف هذا الإعلان", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                                    }
                                 }
                             }
                         },
@@ -1427,11 +1349,8 @@ fun NativeHomeScreenNew(
                         confirmButton = {
                             Button(
                                 onClick = {
-                                    offersList.removeAll { it.id == offer.id }
-                                    saveOffersToPrefs(context, offersList.toList())
-                                    if (offer.roleType == "عرض توصيل") {
-                                        driversList.removeAll { it.id == "d_${offer.id}" }
-                                        saveDriversToPrefs(context, driversList.toList())
+                                    CloudRepo.delete(offer.id) { ok ->
+                                        if (!ok) Toast.makeText(context, "تعذر حذف الإعلان", Toast.LENGTH_SHORT).show()
                                     }
                                     Toast.makeText(context, "تم حذف الإعلان", Toast.LENGTH_SHORT).show()
                                     offerToDelete = null
