@@ -1,3 +1,5 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /path/to/sdk/tools/proguard/proguard-android.txt
+# قواعد R8 لتطبيق LIVLINK
+# التطبيق كيستعمل org.json (جزء من Android) وCompose، وما كيحتاجش قواعد خاصة.
+# حافظ على أرقام الأسطر فتقارير الأعطال (مفيد مع Play Console):
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
