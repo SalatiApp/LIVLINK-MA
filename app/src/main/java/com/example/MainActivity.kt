@@ -26,7 +26,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val systemDark = isSystemInDarkTheme()
-            var isDarkMode by remember { mutableStateOf(systemDark) }
+            // الوضع الليلي كيتحفظ: إلا ما بدلتيهش، كنتبعو وضع الهاتف
+            var isDarkMode by remember {
+                mutableStateOf(if (prefs.contains("dark_mode")) prefs.getBoolean("dark_mode", systemDark) else systemDark)
+            }
             var currentRole by remember { mutableStateOf(savedRole) }
 
             val isDriver = currentRole == "ليفرور"
@@ -41,7 +44,10 @@ class MainActivity : ComponentActivity() {
                 ) {
                     NativeHomeScreenNew(
                         isDarkMode = isDarkMode,
-                        onToggleDarkMode = { isDarkMode = !isDarkMode },
+                        onToggleDarkMode = {
+                            isDarkMode = !isDarkMode
+                            prefs.edit().putBoolean("dark_mode", isDarkMode).apply()
+                        },
                         currentRole = currentRole,
                         onRoleChange = { newRole ->
                             currentRole = newRole
