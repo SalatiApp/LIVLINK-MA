@@ -37,6 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -249,6 +250,38 @@ val CITY_DISTRICTS_MAP = mapOf(
     "مولاي يعقوب" to listOf("اختر الحي", "جميع الأحياء", "وسط المدينة", "حي السلام", "حي المسيرة", "الحي الإداري", "المحطة الطرقية")
 )
 
+// مدة صلاحية الإعلان: 7 أيام، من بعدها كيتحيد تلقائياً
+const val OFFER_TTL_MS = 7L * 24 * 60 * 60 * 1000
+
+// رقم مغربي صحيح: 06/07/05 xxxxxxxx ولا +212 / 00212 قبلهم
+fun isValidMoroccanPhone(raw: String): Boolean {
+    val cleaned = raw.filter { it.isDigit() || it == '+' }
+    return Regex("^(\\+212|00212|0)[5-7][0-9]{8}\$").matches(cleaned)
+}
+
+private fun arAgo(n: Long, one: String, two: String, few: String, many: String): String = when {
+    n == 1L -> "منذ $one"
+    n == 2L -> "منذ $two"
+    n in 3L..10L -> "منذ $n $few"
+    else -> "منذ $n $many"
+}
+
+// الوقت النسبي: "الآن" / "منذ 5 دقائق" / "منذ ساعتين" / "منذ 3 أيام"
+fun relativeTimeArabic(createdAt: Long, fallback: String): String {
+    if (createdAt <= 0L) return fallback
+    val diff = System.currentTimeMillis() - createdAt
+    if (diff < 60_000L) return "الآن"
+    val minutes = diff / 60_000L
+    return when {
+        minutes < 60L -> arAgo(minutes, "دقيقة", "دقيقتين", "دقائق", "دقيقة")
+        minutes < 1440L -> arAgo(minutes / 60L, "ساعة", "ساعتين", "ساعات", "ساعة")
+        else -> arAgo(minutes / 1440L, "يوم", "يومين", "أيام", "يوماً")
+    }
+}
+
+private fun isFresh(createdAt: Long): Boolean =
+    createdAt <= 0L || System.currentTimeMillis() - createdAt <= OFFER_TTL_MS
+
 data class DeliveryOffer(
     val id: String,
     val title: String,
@@ -262,7 +295,8 @@ data class DeliveryOffer(
     val priceEstimate: String = "حسب الاتفاق",
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val locationAddress: String? = null
+    val locationAddress: String? = null,
+    val createdAt: Long = 0L
 )
 
 data class DriverProfile(
@@ -273,7 +307,8 @@ data class DriverProfile(
     val phone: String,
     val isAvailable: Boolean,
     val experience: String,
-    val completedTrips: Int = 0
+    val completedTrips: Int = 0,
+    val createdAt: Long = 0L
 )
 
 @SuppressLint("MissingPermission")
@@ -373,6 +408,7 @@ fun saveOffersToPrefs(context: Context, offers: List<DeliveryOffer>) {
             obj.put("roleType", offer.roleType)
             obj.put("phone", offer.phone)
             obj.put("timeAgo", offer.timeAgo)
+            obj.put("createdAt", offer.createdAt)
             obj.put("details", offer.details)
             obj.put("vehicleType", offer.vehicleType)
             obj.put("priceEstimate", offer.priceEstimate)
@@ -407,11 +443,13 @@ fun loadOffersFromPrefs(context: Context): List<DeliveryOffer>? {
                     priceEstimate = obj.optString("priceEstimate", "حسب الاتفاق"),
                     latitude = if (obj.has("latitude") && !obj.isNull("latitude")) obj.optDouble("latitude") else null,
                     longitude = if (obj.has("longitude") && !obj.isNull("longitude")) obj.optDouble("longitude") else null,
-                    locationAddress = if (obj.has("locationAddress") && !obj.isNull("locationAddress")) obj.optString("locationAddress") else null
+                    locationAddress = if (obj.has("locationAddress") && !obj.isNull("locationAddress")) obj.optString("locationAddress") else null,
+                    createdAt = obj.optLong("createdAt", obj.optString("id", "").toLongOrNull() ?: 0L)
                 )
             )
         }
-        if (list.isNotEmpty()) list else null
+        val fresh = list.filter { isFresh(it.createdAt) }
+        if (fresh.isNotEmpty()) fresh else null
     } catch (e: Exception) {
         null
     }
@@ -431,6 +469,7 @@ fun saveDriversToPrefs(context: Context, drivers: List<DriverProfile>) {
             obj.put("isAvailable", driver.isAvailable)
             obj.put("experience", driver.experience)
             obj.put("completedTrips", driver.completedTrips)
+            obj.put("createdAt", driver.createdAt)
             jsonArr.put(obj)
         }
         prefs.edit().putString("saved_drivers_json", jsonArr.toString()).apply()
@@ -454,11 +493,13 @@ fun loadDriversFromPrefs(context: Context): List<DriverProfile>? {
                     phone = obj.optString("phone", ""),
                     isAvailable = obj.optBoolean("isAvailable", true),
                     experience = obj.optString("experience", "سائق متاح للتوصيل"),
-                    completedTrips = obj.optInt("completedTrips", 0)
+                    completedTrips = obj.optInt("completedTrips", 0),
+                    createdAt = obj.optLong("createdAt", obj.optString("id", "").removePrefix("d_").toLongOrNull() ?: 0L)
                 )
             )
         }
-        if (list.isNotEmpty()) list else null
+        val fresh = list.filter { isFresh(it.createdAt) }
+        if (fresh.isNotEmpty()) fresh else null
     } catch (e: Exception) {
         null
     }
@@ -556,28 +597,29 @@ fun NativeHomeScreenNew(
     val borderColor = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
 
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        var currentTab by remember { mutableIntStateOf(0) }
-        var selectedCity by remember { mutableStateOf("جميع مدن المغرب") }
-        var selectedDistrict by remember { mutableStateOf("اختر الحي") }
+        var currentTab by rememberSaveable { mutableStateOf(0) }
+        var selectedCity by rememberSaveable { mutableStateOf("جميع مدن المغرب") }
+        var selectedDistrict by rememberSaveable { mutableStateOf("اختر الحي") }
 
         var cityDropdownExpanded by remember { mutableStateOf(false) }
         var districtDropdownExpanded by remember { mutableStateOf(false) }
-        var isDriverAvailable by remember { mutableStateOf(true) }
+        var isDriverAvailable by rememberSaveable { mutableStateOf(true) }
 
         var selectedOfferForDetails by remember { mutableStateOf<DeliveryOffer?>(null) }
+        var offerToDelete by remember { mutableStateOf<DeliveryOffer?>(null) }
         var selectedDriverForDetails by remember { mutableStateOf<DriverProfile?>(null) }
 
         var showEditProfileDialog by remember { mutableStateOf(false) }
         var profileName by remember {
             mutableStateOf(
                 context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE).getString("profile_name", null)
-                    ?: (if (isDriver) "سائق توصيل معتمد" else "محل تجاري - ليفلينك")
+                    ?: ""
             )
         }
         var profilePhone by remember {
             mutableStateOf(
                 context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE).getString("profile_phone", null)
-                    ?: "0661234567"
+                    ?: ""
             )
         }
 
@@ -686,6 +728,7 @@ fun NativeHomeScreenNew(
                             onValueChange = { editPhone = it },
                             label = { Text("رقم الهاتف", color = subTextColor) },
                             singleLine = true,
+                            isError = editPhone.isNotBlank() && !isValidMoroccanPhone(editPhone),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = textColor,
@@ -750,6 +793,8 @@ fun NativeHomeScreenNew(
                         onClick = {
                             if (editName.isBlank() || editPhone.isBlank()) {
                                 Toast.makeText(context, "يرجى ملء الاسم والهاتف", Toast.LENGTH_SHORT).show()
+                            } else if (!isValidMoroccanPhone(editPhone)) {
+                                Toast.makeText(context, "رقم الهاتف غير صحيح (مثال: 0612345678)", Toast.LENGTH_LONG).show()
                             } else {
                                 profileName = editName.trim()
                                 profilePhone = editPhone.trim()
@@ -1217,7 +1262,9 @@ fun NativeHomeScreenNew(
                         isDarkMode = isDarkMode,
                         onDismiss = { currentTab = 1 },
                         initialCity = selectedCity,
-                        onAddSubmit = { title, city, phone, details, type, lat, lng, address ->
+                        initialDistrict = selectedDistrict,
+                        initialPhone = profilePhone,
+                        onAddSubmit = { title, city, district, phone, details, type, lat, lng, address ->
                             val cleanVehicle = if (type == "عرض توصيل") {
                                 if (title.contains("-")) title.substringAfter("-").trim() else "دراجة نارية مع صندوق"
                             } else {
@@ -1229,11 +1276,12 @@ fun NativeHomeScreenNew(
                                 title
                             }
 
+                            val createdAt = System.currentTimeMillis()
                             val newOffer = DeliveryOffer(
-                                id = System.currentTimeMillis().toString(),
+                                id = createdAt.toString(),
                                 title = title,
                                 city = city,
-                                district = if (selectedDistrict == "اختر الحي") "جميع الأحياء" else selectedDistrict,
+                                district = district,
                                 roleType = type,
                                 phone = phone,
                                 timeAgo = "الآن",
@@ -1242,21 +1290,23 @@ fun NativeHomeScreenNew(
                                 priceEstimate = "حسب الاتفاق",
                                 latitude = lat,
                                 longitude = lng,
-                                locationAddress = address
+                                locationAddress = address,
+                                createdAt = createdAt
                             )
                             offersList.add(0, newOffer)
                             saveOffersToPrefs(context, offersList.toList())
 
                             if (type == "عرض توصيل") {
                                 val newDriver = DriverProfile(
-                                    id = "d_${System.currentTimeMillis()}",
+                                    id = "d_$createdAt",
                                     name = cleanName,
                                     city = city,
                                     vehicle = cleanVehicle,
                                     phone = phone,
                                     isAvailable = true,
                                     experience = "سائق متاح للتوصيل",
-                                    completedTrips = 1
+                                    completedTrips = 0,
+                                    createdAt = createdAt
                                 )
                                 driversList.add(0, newDriver)
                                 saveDriversToPrefs(context, driversList.toList())
@@ -1264,9 +1314,10 @@ fun NativeHomeScreenNew(
 
                             if (selectedCity != "جميع مدن المغرب" && selectedCity != city) {
                                 selectedCity = city
+                                selectedDistrict = "اختر الحي"
                             }
 
-                            Toast.makeText(context, "تم نشر إعلانك بنجاح في $city", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "تم حفظ إعلانك على هذا الهاتف ($city)", Toast.LENGTH_LONG).show()
                             currentTab = 1
                         }
                     )
@@ -1287,8 +1338,8 @@ fun NativeHomeScreenNew(
                         isDarkMode = isDarkMode,
                         activeColor = activeColor,
                         selectedCity = selectedCity,
-                        userName = profileName,
-                        userPhone = profilePhone,
+                        userName = profileName.ifBlank { "مستخدم LIVLINK" },
+                        userPhone = profilePhone.ifBlank { "غير مضاف" },
                         isDriverAvailable = isDriverAvailable,
                         onToggleDriverAvailability = { isDriverAvailable = !isDriverAvailable },
                         onSwitchRole = {
@@ -1311,6 +1362,12 @@ fun NativeHomeScreenNew(
                                 Text(text = "المدينة والحي: ${offer.city} • ${offer.district}", fontSize = 12.5.sp, color = dialogText)
                                 Text(text = "تفاصيل الإعلان: ${offer.details}", fontSize = 12.sp, lineHeight = 17.sp, color = dialogText)
                                 Text(text = "رقم الهاتف: ${offer.phone}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = dialogText)
+                                // دابا كاع الإعلانات محفوظة فهاد الهاتف، يعني ديالك. مع Firebase غادي نزيدو شرط الملكية.
+                                TextButton(onClick = { offerToDelete = offer }) {
+                                    Icon(imageVector = Icons.Default.Delete, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("حذف هذا الإعلان", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                                }
                             }
                         },
                         confirmButton = {
@@ -1360,6 +1417,39 @@ fun NativeHomeScreenNew(
                     )
                 }
 
+                offerToDelete?.let { offer ->
+                    val dialogBg = if (isDarkMode) NavyPrimary else Color(0xFFFFFFFF)
+                    val dialogText = if (isDarkMode) Color.White else Color(0xFF0F172A)
+                    AlertDialog(
+                        onDismissRequest = { offerToDelete = null },
+                        title = { Text("حذف الإعلان؟", fontWeight = FontWeight.Bold, color = dialogText) },
+                        text = { Text("غادي يتحيد \"${offer.title}\" نهائياً ولا يمكن التراجع.", fontSize = 13.sp, color = dialogText) },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    offersList.removeAll { it.id == offer.id }
+                                    saveOffersToPrefs(context, offersList.toList())
+                                    if (offer.roleType == "عرض توصيل") {
+                                        driversList.removeAll { it.id == "d_${offer.id}" }
+                                        saveDriversToPrefs(context, driversList.toList())
+                                    }
+                                    Toast.makeText(context, "تم حذف الإعلان", Toast.LENGTH_SHORT).show()
+                                    offerToDelete = null
+                                    selectedOfferForDetails = null
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                            ) { Text("حذف", color = Color.White, fontWeight = FontWeight.Bold) }
+                        },
+                        dismissButton = {
+                            OutlinedButton(
+                                onClick = { offerToDelete = null },
+                                border = BorderStroke(1.dp, borderColor)
+                            ) { Text("إلغاء", color = dialogText, fontWeight = FontWeight.Bold) }
+                        },
+                        containerColor = dialogBg
+                    )
+                }
+
                 selectedDriverForDetails?.let { driver ->
                     val dialogBg = if (isDarkMode) NavyPrimary else Color(0xFFFFFFFF)
                     val dialogText = if (isDarkMode) Color.White else Color(0xFF0F172A)
@@ -1370,8 +1460,7 @@ fun NativeHomeScreenNew(
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(text = "المدينة: ${driver.city}", fontSize = 13.sp, color = dialogText)
                                 Text(text = "وسيلة النقل: ${driver.vehicle}", fontSize = 13.sp, color = dialogText)
-                                Text(text = "سنوات الخبرة: ${driver.experience}", fontSize = 13.sp, color = dialogText)
-                                Text(text = "التوصيلات المنجزة: ${driver.completedTrips} توصيلة", fontSize = 13.sp, color = dialogText, fontWeight = FontWeight.Bold)
+                                Text(text = "الحالة: ${driver.experience}", fontSize = 13.sp, color = dialogText)
                             }
                         },
                         confirmButton = {
@@ -1409,29 +1498,94 @@ fun NativeHomeScreenNew(
     }
 }
 
+// خانة اختيار (قائمة منسدلة) بنفس شكل خانات الاستمارة
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FormDropdownField(
+    label: String,
+    value: String,
+    options: List<String>,
+    onSelect: (String) -> Unit,
+    textColor: Color,
+    subTextColor: Color,
+    borderColor: Color,
+    accent: Color,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text(label, color = subTextColor) },
+            trailingIcon = {
+                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null, tint = textColor)
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = textColor,
+                unfocusedTextColor = textColor,
+                focusedBorderColor = accent,
+                unfocusedBorderColor = borderColor,
+                focusedLabelColor = accent,
+                unfocusedLabelColor = subTextColor
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        // طبقة شفافة: الضغط على الخانة كاملة كيفتح اللائحة
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { expanded = true }
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.heightIn(max = 320.dp)
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option, fontSize = 13.sp, fontWeight = FontWeight.Bold) },
+                    onClick = {
+                        onSelect(option)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun AddScreen(
     isDriver: Boolean,
     isDarkMode: Boolean,
     onDismiss: () -> Unit,
     initialCity: String = "جميع مدن المغرب",
-    onAddSubmit: (title: String, city: String, phone: String, details: String, type: String, lat: Double?, lng: Double?, address: String?) -> Unit
+    initialDistrict: String = "اختر الحي",
+    initialPhone: String = "",
+    onAddSubmit: (title: String, city: String, district: String, phone: String, details: String, type: String, lat: Double?, lng: Double?, address: String?) -> Unit
 ) {
     val context = LocalContext.current
-    var selectedType by remember(isDriver) { mutableStateOf(if (isDriver) "عرض توصيل" else "طلب توصيل") }
-    var titleText by remember { mutableStateOf("") }
-    var cityText by remember { mutableStateOf(if (initialCity == "جميع مدن المغرب") "الدار البيضاء" else initialCity) }
-    var phoneText by remember { mutableStateOf("") }
-    var detailsText by remember { mutableStateOf("") }
+    var selectedType by rememberSaveable(isDriver) { mutableStateOf(if (isDriver) "عرض توصيل" else "طلب توصيل") }
+    var titleText by rememberSaveable { mutableStateOf("") }
+    // المدينة خاصها تتختار بوضوح (ما بقاش كنحطو الدار البيضاء بالصمت)
+    var cityText by rememberSaveable { mutableStateOf(if (initialCity == "جميع مدن المغرب") "" else initialCity) }
+    var districtText by rememberSaveable { mutableStateOf(if (initialDistrict == "اختر الحي") "جميع الأحياء" else initialDistrict) }
+    var phoneText by rememberSaveable { mutableStateOf(initialPhone) }
+    var detailsText by rememberSaveable { mutableStateOf("") }
     val scrollState = rememberScrollState()
+    val phoneValid = isValidMoroccanPhone(phoneText)
 
     // حالة الموقع
-    var latValue by remember { mutableStateOf<Double?>(null) }
-    var lngValue by remember { mutableStateOf<Double?>(null) }
-    var addressValue by remember { mutableStateOf<String?>(null) }
+    var latValue by rememberSaveable { mutableStateOf<Double?>(null) }
+    var lngValue by rememberSaveable { mutableStateOf<Double?>(null) }
+    var addressValue by rememberSaveable { mutableStateOf<String?>(null) }
     var isLocating by remember { mutableStateOf(false) }
     var showManualDialog by remember { mutableStateOf(false) }
-    var manualAddressText by remember { mutableStateOf("") }
+    var showLocationConsent by remember { mutableStateOf(false) }
+    var manualAddressText by rememberSaveable { mutableStateOf("") }
 
     val screenBg = if (isDarkMode) NavyPrimary else Color(0xFFF8FAFC)
     val cardBg = if (isDarkMode) NavySecondary else Color(0xFFFFFFFF)
@@ -1463,6 +1617,22 @@ fun AddScreen(
             startLocating()
         } else {
             Toast.makeText(context, "خاصك تقبل صلاحية الموقع باش نحددو موقع المحل", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun requestLocationFlow() {
+        val hasPermission =
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (hasPermission) {
+            startLocating()
+        } else {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
         }
     }
 
@@ -1531,10 +1701,33 @@ fun AddScreen(
                         }
                     }
 
+                    val formAccent = if (selectedType == "عرض توصيل") DriverOrangePrimary else ShopBlueDarkPrimary
+
+                    FormDropdownField(
+                        label = "المدينة *",
+                        value = cityText.ifBlank { "اختر المدينة" },
+                        options = MOROCCAN_CITIES.filter { it != "جميع مدن المغرب" },
+                        onSelect = { cityText = it; districtText = "جميع الأحياء" },
+                        textColor = textColor, subTextColor = subTextColor, borderColor = borderColor, accent = formAccent
+                    )
+
+                    FormDropdownField(
+                        label = "الحي",
+                        value = districtText,
+                        options = (CITY_DISTRICTS_MAP[cityText] ?: listOf("جميع الأحياء")).filter { it != "اختر الحي" },
+                        onSelect = { districtText = it },
+                        textColor = textColor, subTextColor = subTextColor, borderColor = borderColor, accent = formAccent
+                    )
+
                     OutlinedTextField(
                         value = titleText,
                         onValueChange = { titleText = it },
-                        label = { Text("اسم المحل ونوع السلع *", color = subTextColor) },
+                        label = {
+                            Text(
+                                if (selectedType == "عرض توصيل") "الاسم - نوع المركبة (مثال: يوسف - دراجة نارية) *" else "اسم المحل ونوع السلع *",
+                                color = subTextColor
+                            )
+                        },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = textColor,
@@ -1552,6 +1745,13 @@ fun AddScreen(
                         onValueChange = { phoneText = it },
                         label = { Text("رقم الهاتف أو الواتساب للتواصل المباشر *", color = subTextColor) },
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        isError = phoneText.isNotBlank() && !phoneValid,
+                        supportingText = {
+                            if (phoneText.isNotBlank() && !phoneValid) {
+                                Text("رقم غير صحيح. مثال: 0612345678 أو +212612345678")
+                            }
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = textColor,
                             unfocusedTextColor = textColor,
@@ -1628,21 +1828,7 @@ fun AddScreen(
 
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Button(
-                                        onClick = {
-                                            val hasPermission =
-                                                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                                                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                                            if (hasPermission) {
-                                                startLocating()
-                                            } else {
-                                                permissionLauncher.launch(
-                                                    arrayOf(
-                                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                                        Manifest.permission.ACCESS_COARSE_LOCATION
-                                                    )
-                                                )
-                                            }
-                                        },
+                                        onClick = { showLocationConsent = true },
                                         enabled = !isLocating,
                                         colors = ButtonDefaults.buttonColors(containerColor = ShopBlueAccent),
                                         modifier = Modifier.weight(1f)
@@ -1677,10 +1863,15 @@ fun AddScreen(
 
                     Button(
                         onClick = {
-                            if (titleText.isNotBlank() && phoneText.isNotBlank()) {
-                                onAddSubmit(titleText, cityText, phoneText, detailsText, selectedType, latValue, lngValue, addressValue)
-                            } else {
+                            if (titleText.isBlank() || phoneText.isBlank() || cityText.isBlank()) {
                                 Toast.makeText(context, "يرجى ملء جميع الحقول المطلوبة (*)", Toast.LENGTH_SHORT).show()
+                            } else if (!phoneValid) {
+                                Toast.makeText(context, "رقم الهاتف غير صحيح (مثال: 0612345678)", Toast.LENGTH_LONG).show()
+                            } else {
+                                onAddSubmit(
+                                    titleText.trim(), cityText, districtText, phoneText.trim(), detailsText.trim(),
+                                    selectedType, latValue, lngValue, addressValue
+                                )
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = if (selectedType == "عرض توصيل") DriverOrangePrimary else ShopBlueDarkPrimary),
@@ -1694,6 +1885,35 @@ fun AddScreen(
                 }
             }
         }
+    }
+
+    if (showLocationConsent) {
+        AlertDialog(
+            onDismissRequest = { showLocationConsent = false },
+            title = { Text("مشاركة موقع المحل", fontWeight = FontWeight.Bold, color = textColor) },
+            text = {
+                Text(
+                    "غادي نستعملو موقعك الحالي باش نحددو موقع المحل. هاد الإحداثيات غادي تتنشر مع إعلانك باش يوصلو لك الليفرورات. ما كنستعملو الموقع لشي غرض آخر. واش موافق؟",
+                    fontSize = 13.sp, lineHeight = 19.sp, color = textColor
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLocationConsent = false
+                        requestLocationFlow()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = ShopBlueAccent)
+                ) { Text("موافق", color = Color.White, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showLocationConsent = false },
+                    border = BorderStroke(1.dp, borderColor)
+                ) { Text("إلغاء", color = textColor, fontWeight = FontWeight.Bold) }
+            },
+            containerColor = cardBg
+        )
     }
 
     if (showManualDialog) {
@@ -1798,7 +2018,7 @@ fun HomeTabContent(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = if (isDriver) "تصفح طلبيات المحلات والمطاعم بجميع أحياء ومدن المغرب وتواصل فوراً مع أصحابها."
-                        else "اعثر على ليفرور موثوق لمحلك في $selectedCity (${if (selectedDistrict == "اختر الحي") "جميع الأحياء" else selectedDistrict}) وقم بإرسال طلبيات زبائنك بسرعة وأمان.",
+                        else "اعثر على ليفرور متاح لمحلك في $selectedCity (${if (selectedDistrict == "اختر الحي") "جميع الأحياء" else selectedDistrict}) وتواصل معه مباشرة لتوصيل طلبيات زبائنك.",
                         fontSize = 13.5.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Medium,
@@ -2091,7 +2311,7 @@ fun DriversTabContent(
     ) {
         item {
             Text(
-                text = "دليل السائقين المعتمدين (الليفرورات)",
+                text = "دليل الليفرورات",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 color = textColor
@@ -2193,12 +2413,6 @@ fun DriversTabContent(
                                         text = "${driver.city} • ${driver.vehicle} (${driver.experience})",
                                         fontSize = 12.5.sp,
                                         color = subTextColor
-                                    )
-                                    Text(
-                                        text = "${driver.completedTrips} توصيلة ناجحة",
-                                        fontSize = 12.sp,
-                                        color = textColor,
-                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
@@ -2383,10 +2597,10 @@ fun ProfileTabContent(
                     Divider(color = borderColor)
 
                     // نفس شكل خانات الاستمارة (تعديل الملف الشخصي)
-                    ProfileInfoField(label = "الاسم المعتمد في المنصة", value = userName, valueColor = textColor, labelColor = subTextColor, borderColor = borderColor)
+                    ProfileInfoField(label = "الاسم في المنصة", value = userName, valueColor = textColor, labelColor = subTextColor, borderColor = borderColor)
                     ProfileInfoField(label = "رقم الهاتف للتواصل المباشر", value = userPhone, valueColor = textColor, labelColor = subTextColor, borderColor = borderColor)
                     ProfileInfoField(label = "المدينة المحددة حالياً", value = selectedCity, valueColor = textColor, labelColor = subTextColor, borderColor = borderColor)
-                    ProfileInfoField(label = "نموذج الاستخدام المعتمد", value = "تطبيق مجاني 100%", valueColor = Color(0xFF16A34A), labelColor = subTextColor, borderColor = borderColor)
+                    ProfileInfoField(label = "نموذج الاستخدام", value = "تطبيق مجاني 100%", valueColor = Color(0xFF16A34A), labelColor = subTextColor, borderColor = borderColor)
                 }
             }
         }
@@ -2544,7 +2758,7 @@ fun OfferItemCard(
                 }
 
                 Text(
-                    text = offer.timeAgo,
+                    text = relativeTimeArabic(offer.createdAt, offer.timeAgo),
                     fontSize = 12.sp,
                     color = subTextColor
                 )
