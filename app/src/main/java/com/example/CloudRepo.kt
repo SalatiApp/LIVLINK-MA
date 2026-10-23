@@ -86,6 +86,23 @@ object CloudRepo {
             .addOnCompleteListener { onDone(it.isSuccessful) }
     }
 
+    /** بلاغ عن إعلان. معرّف البلاغ = adId_uid باش المستخدم ما يبلغش مرتين على نفس الإعلان. */
+    fun report(adId: String, reason: String, onDone: (Boolean) -> Unit) {
+        val me = uid
+        if (me == null) {
+            onDone(false)
+            return
+        }
+        val data = hashMapOf<String, Any>(
+            "adId" to adId,
+            "reporterId" to me,
+            "reason" to reason,
+            "createdAt" to System.currentTimeMillis()
+        )
+        db.collection("reports").document("${adId}_$me").set(data)
+            .addOnCompleteListener { onDone(it.isSuccessful) }
+    }
+
     fun newId(): String = db.collection(ADS).document().id
 
     private fun DocumentSnapshot.toOffer(): DeliveryOffer? {
