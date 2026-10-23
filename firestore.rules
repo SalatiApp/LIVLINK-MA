@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function validAd(d) {
+      return d.keys().hasOnly(['title', 'city', 'district', 'roleType', 'phone', 'details',
+                               'vehicleType', 'priceEstimate', 'ownerId', 'createdAt', 'expiresAt',
+                               'latitude', 'longitude', 'locationAddress'])
+        && d.keys().hasAll(['title', 'city', 'roleType', 'phone', 'ownerId', 'createdAt', 'expiresAt'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 150
+        && d.city is string && d.city.size() > 0 && d.city.size() <= 60
+        && (!('district' in d) || (d.district is string && d.district.size() <= 80))
+        && d.roleType in ['طلب توصيل', 'عرض توصيل']
+        && d.phone is string && d.phone.matches('^[0-9+ ().-]{9,20}$')
+        && (!('details' in d) || (d.details is string && d.details.size() <= 1000))
+        && (!('vehicleType' in d) || (d.vehicleType is string && d.vehicleType.size() <= 60))
+        && (!('priceEstimate' in d) || (d.priceEstimate is string && d.priceEstimate.size() <= 60))
+        && (!('locationAddress' in d) || (d.locationAddress is string && d.locationAddress.size() <= 300))
+        && (!('latitude' in d) || (d.latitude is number && d.latitude >= -90 && d.latitude <= 90))
+        && (!('longitude' in d) || (d.longitude is number && d.longitude >= -180 && d.longitude <= 180))
+        && d.ownerId == request.auth.uid
+        // createdAt لازم يكون قريب من وقت السيرفر (±6 ساعات) باش ما يتلاعبش فمدة الصلاحية
+        && d.createdAt is number
+        && d.createdAt > request.time.toMillis() - 21600000
+        && d.createdAt < request.time.toMillis() + 21600000
+        // صلاحية الإعلان 7 أيام كحد أقصى
+        && d.expiresAt is timestamp
+        && d.expiresAt.toMillis() <= d.createdAt + 604800000 + 1000;
+    }
+
+    // الإعلانات: القراءة عامة (موقع الويب كيقراها بلا تسجيل دخول باش يتفهرسو فـ Google)
+    match /ads/{adId} {
+      allow get, list: if true;
+      allow create: if signedIn() && validAd(request.resource.data);
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // البلاغات: الكتابة فقط (مرة وحدة لكل مستخدم/إعلان)، والقراءة من Firebase Console أو Admin SDK
+    match /reports/{reportId} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['adId', 'reporterId', 'reason', 'createdAt'])
+        && request.resource.data.keys().hasAll(['adId', 'reporterId', 'reason', 'createdAt'])
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.adId is string
+        && request.resource.data.adId.size() <= 40
+        && reportId == request.resource.data.adId + '_' + request.auth.uid
+        && request.resource.data.reason in ['spam', 'scam', 'wrong', 'other']
+        && request.resource.data.createdAt is number;
+      allow read, update, delete: if false;
+    }
+  }
+}
