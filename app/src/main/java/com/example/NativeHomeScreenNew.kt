@@ -734,6 +734,7 @@ fun NativeHomeScreenNew(
 
         var selectedOfferForDetails by remember { mutableStateOf<DeliveryOffer?>(null) }
         var offerToDelete by remember { mutableStateOf<DeliveryOffer?>(null) }
+        var offerToReport by remember { mutableStateOf<DeliveryOffer?>(null) }
         var selectedDriverForDetails by remember { mutableStateOf<DriverProfile?>(null) }
 
         var showEditProfileDialog by remember { mutableStateOf(false) }
@@ -751,6 +752,11 @@ fun NativeHomeScreenNew(
         }
 
         // الإعلانات كتجي من Firestore (كيبانو لكاع المستخدمين). دخول مجهول تلقائي.
+        // الإعلانات لي بلغ عليها المستخدم كتتخبى عندو فالتطبيق (محفوظة فالهاتف)
+        val reportPrefs = context.getSharedPreferences("livlink_prefs", Context.MODE_PRIVATE)
+        val hiddenReports = remember {
+            mutableStateListOf<String>().apply { addAll(reportPrefs.getStringSet("reported_ids", emptySet()) ?: emptySet()) }
+        }
         val offersList = remember { mutableStateListOf<DeliveryOffer>() }
         var cloudUid by remember { mutableStateOf(CloudRepo.uid) }
         var cloudError by remember { mutableStateOf(false) }
@@ -770,7 +776,7 @@ fun NativeHomeScreenNew(
                     onChange = { list ->
                         cloudError = false
                         offersList.clear()
-                        offersList.addAll(list)
+                        offersList.addAll(list.filter { it.id !in hiddenReports })
                     },
                     onError = { cloudError = true }
                 )
@@ -1528,6 +1534,14 @@ fun NativeHomeScreenNew(
                                         Text("حذف هذا الإعلان", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
                                     }
                                 }
+                                // الإبلاغ: كيبان لكل إعلان ماشي ديالك (مطلوب فسياسة Google Play للمحتوى لي كيدخلو المستخدمين)
+                                if (offer.ownerId != cloudUid) {
+                                    TextButton(onClick = { offerToReport = offer }) {
+                                        Icon(imageVector = Icons.Default.Flag, contentDescription = null, tint = dialogText.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("الإبلاغ عن هذا الإعلان", color = dialogText.copy(alpha = 0.7f), fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                                    }
+                                }
                             }
                         },
                         confirmButton = {
@@ -1572,6 +1586,49 @@ fun NativeHomeScreenNew(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("اتصال", color = dialogText, fontWeight = FontWeight.Bold)
                             }
+                        },
+                        containerColor = dialogBg
+                    )
+                }
+
+                offerToReport?.let { offer ->
+                    val dialogBg = if (isDarkMode) NavyPrimary else Color(0xFFFFFFFF)
+                    val dialogText = if (isDarkMode) Color.White else Color(0xFF0F172A)
+                    val reasons = listOf(
+                        "spam" to "سبام أو إعلان مكرر",
+                        "scam" to "احتيال أو محتوى مسيء",
+                        "wrong" to "معلومات أو رقم هاتف غير صحيح",
+                        "other" to "سبب آخر"
+                    )
+                    AlertDialog(
+                        onDismissRequest = { offerToReport = null },
+                        title = { Text("الإبلاغ عن الإعلان", fontWeight = FontWeight.Bold, color = dialogText) },
+                        text = {
+                            Column {
+                                Text("اختار سبب البلاغ:", fontSize = 12.5.sp, color = dialogText)
+                                reasons.forEach { (key, label) ->
+                                    TextButton(
+                                        onClick = {
+                                            CloudRepo.report(offer.id, key) { ok ->
+                                                if (ok) {
+                                                    hiddenReports.add(offer.id)
+                                                    offersList.removeAll { it.id == offer.id }
+                                                    reportPrefs.edit().putStringSet("reported_ids", hiddenReports.toSet()).apply()
+                                                    Toast.makeText(context, "شكراً، توصلنا ببلاغك", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    Toast.makeText(context, "تعذر إرسال البلاغ. عاود المحاولة.", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                            offerToReport = null
+                                            selectedOfferForDetails = null
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) { Text(label, color = dialogText, fontWeight = FontWeight.Bold, fontSize = 13.sp) }
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { offerToReport = null }) { Text("إلغاء", color = dialogText) }
                         },
                         containerColor = dialogBg
                     )
