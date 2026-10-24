@@ -2829,6 +2829,16 @@ fun ProfileTabContent(
                     .padding(top = 10.dp, bottom = 6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // رابط سياسة الخصوصية (مطلوب من Google Play داخل التطبيق نفسو)
+                val privacyCtx = LocalContext.current
+                TextButton(onClick = {
+                    runCatching {
+                        privacyCtx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://livlink-ma.pages.dev/privacy.html")))
+                    }
+                }) {
+                    Text("سياسة الخصوصية", color = subTextColor, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                }
+
                 // خط فاصل بألوان المنصة (أزرق ← برتقالي)
                 Box(
                     modifier = Modifier
